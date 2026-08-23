@@ -1,6 +1,7 @@
 'use strict';
 
 const { WorkloadModuleBase } = require('@hyperledger/caliper-core');
+const crypto = require('crypto');
 
 class MyWorkload extends WorkloadModuleBase {
     constructor() {
@@ -14,10 +15,17 @@ class MyWorkload extends WorkloadModuleBase {
 
     async submitTransaction() {
         this.txIndex++;
-        const recordID = `bench-caliper-${this.workerIndex}-${this.txIndex}-${Date.now()}`;
-        const patientID = `PATIENT_${this.workerIndex}_${this.txIndex}`;
-        const dataHash = `DATA_HASH_${Date.now()}`;
-        const zkpProofHash = `ZKP_HASH_${Date.now()}`;
+        const rawPatientID = `PATIENT_${this.workerIndex}_${this.txIndex}`;
+        const patientIDHash = crypto.createHash('sha256').update(rawPatientID).digest('hex');
+        
+        const recordID = `rec-${patientIDHash.substring(0, 8)}-${Date.now()}-${this.txIndex}`;
+        const dataHash = crypto.createHash('sha256').update(`DATA_PAYLOAD_${this.txIndex}_${Date.now()}`).digest('hex');
+        const zkpProofHash = crypto.createHash('sha256').update(`ZKP_PROOF_AGE_${this.txIndex}_${Date.now()}`).digest('hex');
+
+        const accessPolicy = JSON.stringify({
+            requireZKP: true,
+            allowedMSPs: ['HospitalMSP', 'InsurerMSP']
+        });
 
         const request = {
             contractId: 'health',
@@ -25,12 +33,12 @@ class MyWorkload extends WorkloadModuleBase {
             invokerMspId: 'HospitalMSP',
             contractArguments: [
                 recordID, 
-                patientID, 
+                patientIDHash, 
                 dataHash, 
                 'ipfs://caliper-bench', 
                 zkpProofHash, 
-                'CLINICAL_TEST', 
-                '{"requireZKP": true}'
+                'CLINICAL_BENCHMARK', 
+                accessPolicy
             ],
             readOnly: false
         };
@@ -43,7 +51,7 @@ class MyWorkload extends WorkloadModuleBase {
     }
 
     async cleanupWorkloadModule() {
-        // No cleanup needed for now
+        // Cleanup complete
     }
 }
 

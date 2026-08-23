@@ -3,7 +3,6 @@
 set -e
 
 # Performance Achievement: ~1000 TPS verified for clinical record floods.
-export NODE_TLS_REJECT_UNAUTHORIZED=0
 
 echo -e "\033[0;34m[ZeroTrustBlock] Initializing Hyperledger Caliper v0.7.1...\033[0m"
 

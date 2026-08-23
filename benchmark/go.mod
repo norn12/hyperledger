@@ -3,6 +3,7 @@ module zerotrust/benchmark
 go 1.22.2
 
 replace zerotrust/gateway => ../gateway
+replace zerotrust/zkp => ../zkp
 
 require (
 	github.com/google/uuid v1.6.0

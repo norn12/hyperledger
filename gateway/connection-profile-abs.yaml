@@ -2,7 +2,7 @@ name: "ZeroTrustNetwork"
 version: "1.0.0"
 
 client:
-  organization: HospitalMSP
+  organization: HospitalOrg
   connection:
     timeout:
       peer:
@@ -13,7 +13,7 @@ client:
         as_127.0.0.1: true
 
 organizations:
-  HospitalMSP:
+  HospitalOrg:
     mspid: HospitalMSP
     peers:
       - peer0.hospital.zerotrust.com
@@ -21,7 +21,7 @@ organizations:
     certificateAuthorities:
       - ca.hospital.zerotrust.com
 
-  InsurerMSP:
+  InsurerOrg:
     mspid: InsurerMSP
     peers:
       - peer0.insurer.zerotrust.com
@@ -37,15 +37,6 @@ peers:
     grpcOptions:
       ssl-target-name-override: peer0.hospital.zerotrust.com
       hostnameOverride: peer0.hospital.zerotrust.com
-
-orderers:
-  orderer1.zerotrust.com:
-    url: grpcs://127.0.0.1:7050
-    tlsCACerts:
-      path: ../crypto-config/ordererOrganizations/zerotrust.com/orderers/orderer1.zerotrust.com/tls/ca.crt
-    grpcOptions:
-      ssl-target-name-override: orderer1.zerotrust.com
-      hostnameOverride: orderer1.zerotrust.com
 
   peer1.hospital.zerotrust.com:
     url: grpcs://127.0.0.1:8051
@@ -71,6 +62,15 @@ orderers:
       ssl-target-name-override: peer1.insurer.zerotrust.com
       hostnameOverride: peer1.insurer.zerotrust.com
 
+orderers:
+  orderer1.zerotrust.com:
+    url: grpcs://127.0.0.1:7050
+    tlsCACerts:
+      path: ../crypto-config/ordererOrganizations/zerotrust.com/orderers/orderer1.zerotrust.com/tls/ca.crt
+    grpcOptions:
+      ssl-target-name-override: orderer1.zerotrust.com
+      hostnameOverride: orderer1.zerotrust.com
+
 certificateAuthorities:
   ca.hospital.zerotrust.com:
     url: https://127.0.0.1:7054
@@ -78,7 +78,7 @@ certificateAuthorities:
     tlsCACerts:
       path: ../crypto-config/peerOrganizations/hospital.zerotrust.com/ca/ca.hospital.zerotrust.com-cert.pem
     httpOptions:
-      verify: false
+      verify: true
 
   ca.insurer.zerotrust.com:
     url: https://127.0.0.1:8054
@@ -86,7 +86,7 @@ certificateAuthorities:
     tlsCACerts:
       path: ../crypto-config/peerOrganizations/insurer.zerotrust.com/ca/ca.insurer.zerotrust.com-cert.pem
     httpOptions:
-      verify: false
+      verify: true
 
 # Standard SDK Options
 entityMatchers:
@@ -104,7 +104,17 @@ channels:
         chaincodeQuery: true
         ledgerQuery: true
         eventSource: true
+      peer1.hospital.zerotrust.com:
+        endorsingPeer: true
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: true
       peer0.insurer.zerotrust.com:
+        endorsingPeer: true
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: true
+      peer1.insurer.zerotrust.com:
         endorsingPeer: true
         chaincodeQuery: true
         ledgerQuery: true

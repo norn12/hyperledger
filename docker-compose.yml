@@ -1,11 +1,9 @@
 version: '3.7'
 
-# ZeroTrustBlock - Hyperledger Fabric Network
-# Mirrors the paper's deployment:
-#   - 4 ordering nodes (Kafka-based)
-#   - 6 peer nodes (hospital + insurer orgs)
-#   - 2 CA nodes
-#   - 3 gateway nodes
+# ZeroTrustBlock - Hyperledger Fabric Network Topology:
+#   - 2 Raft ordering nodes (orderer1:7050, orderer2:8050)
+#   - 4 Peer nodes (Hospital Org: peer0:7051, peer1:8051; Insurer Org: peer0:9051, peer1:10051)
+#   - 2 CA nodes (ca.hospital:7054, ca.insurer:8054)
 
 networks:
   zerotrust:

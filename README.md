@@ -1,110 +1,105 @@
 # 🛡️ ZeroTrustBlock — Hyperledger Fabric + ZKP
 
 [![Hyperledger Fabric](https://img.shields.io/badge/Hyperledger_Fabric-v2.4.9-2F3136?logo=hyperledger&logoColor=white)](https://www.hyperledger.org/use/fabric)
-[![Go](https://img.shields.io/badge/Go-1.21+-00ADD8?logo=go&logoColor=white)](https://go.dev/)
+[![Go](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go&logoColor=white)](https://go.dev/)
 [![Node.js](https://img.shields.io/badge/Node.js-18+-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 [![Docker](https://img.shields.io/badge/Docker-20.10+-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
-**ZeroTrustBlock** is a high-performance, enterprise-grade blockchain solution combining **Hyperledger Fabric v2.4** and **Zero-Knowledge Proofs (ZKP)** using [gnark](https://github.com/Consensys/gnark) to enable privacy-preserving, auditable clinical health record management and insurance verification.
+**ZeroTrustBlock** is an enterprise-grade, privacy-preserving healthcare data sharing platform combining **Hyperledger Fabric v2.4** and **Zero-Knowledge Proofs (ZKP)** built with [gnark](https://github.com/Consensys/gnark) (BN254 curve, Groth16 zk-SNARKs).
 
 ---
 
-## 🌟 Features
+## 🌟 Architecture & Key Features
 
-- **Multi-Org Decentralized Architecture**: Two organization topology (`HospitalOrg` and `InsurerOrg`) with Raft consensus orderers (`etcdraft`).
-- **Zero-Knowledge Privacy Layer**: Age-range and diagnosis category verification circuits built with `gnark` (BN254 curve, Groth16 zk-SNARKs).
-- **TLS SAN-Verified Identity Management**: Mutual TLS enabled across peers, orderers, and gateway endpoints.
-- **Smart Contract (Chaincode)**: Written in Go using `fabric-contract-api-go` with full CRUD, consent revocation, and immutable audit logs.
-- **Dual Benchmarking Suite**:
-  - High-concurrency native **Go Stress Engine** (reaching 2,000+ TPS).
-  - Industry-standard **Hyperledger Caliper v0.7** testsuite.
-
----
-
-## 🚀 Performance Benchmarks (Verified)
-
-| Metric | Go Stress Engine | Caliper Benchmark | Target Standard | Status |
-|---|---|---|---|---|
-| **Peak Throughput** | **2,081.36 TPS** | **~1,000 TPS** | 1,577 TPS | **✓ Exceeded** |
-| **Avg Latency** | **229 ms** | **~310 ms** | < 480 ms | **✓ Optimized** |
-| **Success Rate** | **100% (5,000 tx)** | **100%** | 100% | **✓ Verified** |
-| **ZKP Verification** | **< 60 ms** | N/A | < 100 ms | **✓ Optimal** |
-| **ZKP Proof Size** | **~1.4 KB** | N/A | < 2 KB | **✓ Compact** |
+- **Multi-Org Enterprise Topology**: 2 Organizations (`HospitalMSP` & `InsurerMSP`) spanning 4 peer nodes and a Raft consensus orderer cluster (`etcdraft`).
+- **End-to-End ZKP Integration**: Real zero-knowledge range circuits (`AgeRangeCircuit`, `DiagnosisCategoryCircuit`) compiled and verified client-side in the Go Gateway SDK before Fabric invocation.
+- **Enforced Zero Trust Policy**: Chaincode validates JSON access policies, client MSP identity (via Fabric `cid` package), consent status, and ZKP proof validity on every transaction.
+- **Deterministic Smart Contract**: Chaincode utilizes Fabric proposal timestamps (`GetTxTimestamp()`) ensuring 100% deterministic execution across endorsing peers.
+- **Multi-Org Endorsement Policy**: Strict `AND('HospitalMSP.member', 'InsurerMSP.member')` policy requiring multi-organization validation.
+- **Revocation Safety**: Real-time patient consent revocation immediately blocks subsequent read attempts across all organizations.
 
 ---
 
-## 🏗 Architecture Overview
+## 🏗 System Topology
 
 ```mermaid
 graph TD
-    Client[Client / Healthcare App] -->|gRPC / TLS| Gateway[Go Gateway SDK]
-    Gateway -->|Generate Proof| ZKP[ZKP Engine (gnark Groth16)]
-    Gateway -->|Invoke / Query| PeerH[Peer0 Hospital (7051)]
-    Gateway -->|Invoke / Query| PeerI[Peer0 Insurer (9051)]
-    PeerH -->|Raft Consensus| Orderer[Orderer Cluster (7050, 8050)]
-    PeerI -->|Raft Consensus| Orderer
-    PeerH -->|State DB| CouchDB1[(Hospital State DB)]
-    PeerI -->|State DB| CouchDB2[(Insurer State DB)]
+    Client[Client / Healthcare Application] -->|1. Raw Data + Age Claim| Gateway[Go Gateway SDK]
+    Gateway -->|2. Generate & Verify zk-SNARK| ZKP[gnark ZKP Engine (Groth16/BN254)]
+    Gateway -->|3. Submit Proof + SHA-256 Hash| PeerH0[Peer0 Hospital (7051)]
+    Gateway -->|3. Submit Proof + SHA-256 Hash| PeerI0[Peer0 Insurer (9051)]
+    PeerH0 -->|4. AND Endorsement| Orderer[Raft Orderers (orderer1:7050, orderer2:8050)]
+    PeerI0 -->|4. AND Endorsement| Orderer
+    Orderer -->|5. Commit Block| Ledger[(Fabric Ledger State)]
 ```
+
+---
+
+## 📊 Benchmarking Breakdown
+
+ZeroTrustBlock includes two distinct benchmark suites:
+
+1. **Go Stress Engine (`benchmark/`)**:
+   - Tests end-to-end Gateway ingestion, `gnark` ZKP generation, verification, and Fabric block commits.
+   - **Simulation Mode**: Local development harness simulating high-concurrency loads.
+   - **Real Mode (`cmd/real/main.go`)**: Direct high-concurrency execution against live Fabric peers.
+   
+2. **Hyperledger Caliper Suite (`caliper/`)**:
+   - Evaluates peer network saturation and transaction throughput under flood stress.
+   - **Target Rate**: 2,500 TPS
+   - **Verified Achieved Throughput**: ~1,000 TPS (with 100% transaction success rate)
 
 ---
 
 ## 📋 Prerequisites
 
-Before running ZeroTrustBlock, ensure your system has the following installed:
-
 - **OS**: Linux (Ubuntu 20.04/22.04 LTS recommended) or macOS
-- **Docker**: `v20.10+` and **Docker Compose** `v2.0+`
-- **Go**: `v1.21+`
+- **Docker**: `v20.10+` & **Docker Compose** `v2.0+`
+- **Go**: `v1.22+`
 - **Node.js**: `v18+` & `npm v9+`
-- **Git**: `v2.30+`
 
 ---
 
-## 📖 Quick Start
+## 🚀 Quick Start
 
-### 1. Master Ignition (Automated Full Reset & Run)
-
-Run the master orchestrator script to tear down any existing environment, issue fresh SAN certificates, bootstrap the Raft network, deploy chaincode, initialize wallet identities, and run the concurrency benchmark:
+### Master Automated Reset & Run
+Executes full network cleanup, certificate generation, Raft network bootstrap, chaincode lifecycle deployment on all 4 peers, wallet population, and Caliper benchmarking:
 
 ```bash
 chmod +x full_reset.sh network.sh deploy.sh caliper_test.sh
 ./full_reset.sh
 ```
 
-### 2. Manual Step-by-Step Deployment
+### Manual Component Steps
 
-If you prefer to start components individually:
+1. **Start Network**:
+   ```bash
+   ./network.sh up
+   ```
 
-#### Step 2.1: Bootstrap the Fabric Network
-```bash
-./network.sh up
-```
+2. **Deploy Chaincode**:
+   ```bash
+   ./deploy.sh
+   ```
 
-#### Step 2.2: Deploy Chaincode & Join Channel
-```bash
-./deploy.sh
-```
+3. **Populate Gateway Wallet**:
+   ```bash
+   cd gateway
+   go run cmd/populate/main.go
+   cd ..
+   ```
 
-#### Step 2.3: Populate Gateway Wallet
-```bash
-cd gateway
-go run cmd/populate/main.go
-cd ..
-```
+4. **Execute Real Network Benchmark**:
+   ```bash
+   cd benchmark
+   go run cmd/real/main.go
+   ```
 
-#### Step 2.4: Run High-Concurrency Go Benchmark
-```bash
-cd benchmark
-go run cmd/real/main.go
-```
-
-#### Step 2.5: Execute Hyperledger Caliper Benchmark
-```bash
-./caliper_test.sh
-```
-Results will be output to `caliper/report.html`.
+5. **Run Caliper Benchmark**:
+   ```bash
+   ./caliper_test.sh
+   ```
 
 ---
 
@@ -112,43 +107,32 @@ Results will be output to `caliper/report.html`.
 
 ```
 .
-├── benchmark/               # Go concurrency stress testing suite
-│   ├── cmd/real/            # Real network benchmark entrypoint
-│   └── benchmark.go         # Benchmark harness & metrics reporter
-├── caliper/                 # Hyperledger Caliper performance test suite
-│   ├── benchmarks/          # Caliper workload & test scenarios
-│   └── networks/            # Caliper network connection profiles
+├── benchmark/               # Go stress test harness (Real & Simulation modes)
+├── caliper/                 # Hyperledger Caliper v0.7 benchmark suite
 ├── chaincode/               # Smart contract (Go fabric-contract-api)
-│   └── main.go              # HealthRecord & AccessLog transaction logic
-├── configtx/                # Network topology & channel configuration
-│   └── configtx.yaml        # Channel profiles & anchor peer definitions
-├── crypto-config/           # Crypto material templates & identity certificates
-├── gateway/                 # Client gateway interface (Fabric SDK Go)
-│   ├── cmd/populate/        # Wallet identity registration script
-│   ├── connection-profile.yaml # Network connection profile (relative paths)
-│   └── gateway.go           # High-level client API methods
-├── zkp/                     # Zero-Knowledge Proof circuits & engine
-│   └── health_circuits.go   # AgeRange & DiagnosisCategory gnark circuits
-├── docker-compose.yml       # Container services (Orderers, Peers, CouchDB)
-├── deploy.sh                # Chaincode packaging & lifecycle installer
-├── full_reset.sh            # Full lifecycle cleanup & execution script
-├── network.sh               # Network bootstrap (cryptogen & configtxgen)
-├── caliper_test.sh          # Caliper benchmark runner
-└── README.md                # Project documentation
+│   └── main.go              # Zero Trust logic, consent checks & GetTxTimestamp()
+├── configtx/                # Network topology & channel profiles
+├── crypto-config/           # Identity certificates configuration
+├── gateway/                 # Client gateway SDK (Fabric SDK Go + ZKP integration)
+│   ├── connection-profile.yaml # Network connection profile (fixed structure)
+│   └── gateway.go           # High-level client API & ZKP pipeline
+├── zkp/                     # Zero-Knowledge Proof circuits (gnark)
+│   └── health_circuits.go   # Groth16 age range & diagnosis circuits
+├── docker-compose.yml       # Raft orderers & 4 peer containers
+├── deploy.sh                # Multi-org lifecycle chaincode installer
+├── full_reset.sh            # Automated end-to-end deployment script
+└── network.sh               # Cryptogen & configtxgen network bootstrapper
 ```
 
 ---
 
-## 🔧 Teardown
+## 🔐 Security & Architecture Notes
 
-To stop all running Docker containers and clear channel/crypto artifacts:
-
-```bash
-./network.sh down
-```
+- **Off-Chain Data & IPFS**: Actual medical record payloads are stored in off-chain encrypted storage (e.g. IPFS), while only SHA-256 data hashes, IPFS CIDs, and ZKP proof hashes are committed on-chain.
+- **Docker Socket**: Local development containers mount `/var/run/docker.sock` for peer chaincode container management. Production deployments should utilize external Chaincode-as-a-Service (CCaaS).
 
 ---
 
 ## 🛡️ License
 
-Distributed under the Apache 2.0 License. See `LICENSE` for more information.
+Apache 2.0 License.

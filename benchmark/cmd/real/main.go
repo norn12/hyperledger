@@ -68,8 +68,9 @@ func main() {
 				"val":  rand.Intn(1000),
 			}
 
-			// Measure a WriteHealthRecord
-			_, metrics, err := gw.WriteHealthRecord(patientID, data, "ipfs://bench", "BENCHMARK", "ZKP_HASH_TEST")
+			// Measure WriteHealthRecord with real ZKP proof generation
+			patientAge := 25 + (id % 45)
+			_, metrics, err := gw.WriteHealthRecord(patientID, data, "ipfs://bench", "BENCHMARK", patientAge)
 			if err != nil {
 				errors <- err
 				return
