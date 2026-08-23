@@ -9,6 +9,7 @@ import (
 
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend/groth16"
+	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/frontend/cs/r1cs"
 )
@@ -76,11 +77,11 @@ type ZKPService struct {
 	// Cached proving/verifying keys per circuit type
 	ageRangeProvingKey   groth16.ProvingKey
 	ageRangeVerifyingKey groth16.VerifyingKey
-	ageRangeR1CS         frontend.CompiledConstraintSystem
+	ageRangeR1CS         constraint.ConstraintSystem
 
 	diagProvingKey   groth16.ProvingKey
 	diagVerifyingKey groth16.VerifyingKey
-	diagR1CS         frontend.CompiledConstraintSystem
+	diagR1CS         constraint.ConstraintSystem
 }
 
 // Setup - compiles circuits and generates proving/verifying keys
@@ -92,13 +93,13 @@ func (s *ZKPService) Setup() error {
 
 	fmt.Println("[ZKP] Compiling AgeRange circuit...")
 	ageCircuit := &AgeRangeCircuit{}
-	r1cs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, ageCircuit)
+	ccs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, ageCircuit)
 	if err != nil {
 		return fmt.Errorf("failed to compile AgeRange circuit: %v", err)
 	}
-	s.ageRangeR1CS = r1cs
+	s.ageRangeR1CS = ccs
 
-	pk, vk, err := groth16.Setup(r1cs)
+	pk, vk, err := groth16.Setup(ccs)
 	if err != nil {
 		return fmt.Errorf("failed to setup AgeRange keys: %v", err)
 	}
@@ -108,13 +109,13 @@ func (s *ZKPService) Setup() error {
 
 	fmt.Println("[ZKP] Compiling DiagnosisCategory circuit...")
 	diagCircuit := &DiagnosisCategoryCircuit{}
-	diagR1cs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, diagCircuit)
+	diagCcs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, diagCircuit)
 	if err != nil {
 		return fmt.Errorf("failed to compile DiagnosisCategory circuit: %v", err)
 	}
-	s.diagR1CS = diagR1cs
+	s.diagR1CS = diagCcs
 
-	dpk, dvk, err := groth16.Setup(diagR1cs)
+	dpk, dvk, err := groth16.Setup(diagCcs)
 	if err != nil {
 		return fmt.Errorf("failed to setup DiagnosisCategory keys: %v", err)
 	}
