@@ -4,10 +4,13 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
-	"zerotrust/gateway"
-	"github.com/google/uuid"
+	"os"
+	"path/filepath"
 	"sync"
 	"time"
+
+	"github.com/google/uuid"
+	"zerotrust/gateway"
 )
 
 type BenchmarkConfig struct {
@@ -19,12 +22,33 @@ type BenchmarkConfig struct {
 	ChaincodeName string
 }
 
+func resolvePath(target string) string {
+	if _, err := os.Stat(target); err == nil {
+		return target
+	}
+	base := filepath.Base(target)
+	candidates := []string{
+		filepath.Join("gateway", base),
+		filepath.Join("..", "gateway", base),
+		filepath.Join("..", "..", "gateway", base),
+	}
+	for _, c := range candidates {
+		if _, err := os.Stat(c); err == nil {
+			return c
+		}
+	}
+	return target
+}
+
 func main() {
+	walletPath := resolvePath("../gateway/wallet")
+	ccpPath := resolvePath("../gateway/connection-profile.yaml")
+
 	cfg := BenchmarkConfig{
 		ConcurrentTx:  500, // Peak Saturation
 		TotalTx:       5000,
-		WalletPath:    "../gateway/wallet",
-		CCPPath:       "../gateway/connection-profile.yaml",
+		WalletPath:    walletPath,
+		CCPPath:       ccpPath,
 		ChannelName:   "healthchannel",
 		ChaincodeName: "health",
 	}
@@ -84,7 +108,7 @@ func main() {
 	close(errors)
 
 	duration := time.Since(start)
-	
+
 	var totalLatency int64
 	count := 0
 	for l := range results {
@@ -96,7 +120,7 @@ func main() {
 	if errorCount > 0 {
 		fmt.Printf("First Error:      %v\n", <-errors)
 	}
-	
+
 	fmt.Println("\n=== Benchmark Completed ===")
 	fmt.Printf("Total Successful: %d\n", count)
 	fmt.Printf("Total Errors:     %d\n", errorCount)
