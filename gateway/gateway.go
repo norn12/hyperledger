@@ -200,7 +200,8 @@ func (g *ZeroTrustGateway) ReadHealthRecord(
 	zkpProofHash := proofResult.ProofHash
 
 	contract := g.network.GetContract(g.cfg.HealthChaincode)
-	result, err := contract.EvaluateTransaction(
+	// Execute via SubmitTransaction to guarantee on-chain commitment of immutable access audit logs
+	result, err := contract.SubmitTransaction(
 		"ReadHealthRecord",
 		recordID,
 		zkpProofHash,

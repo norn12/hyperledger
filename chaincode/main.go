@@ -12,10 +12,11 @@ import (
 // HealthRecord represents a patient medical record on-chain
 type HealthRecord struct {
 	RecordID        string `json:"recordId"`
-	PatientID       string `json:"patientId"`       // hashed, never plaintext
-	DataHash        string `json:"dataHash"`         // SHA-256 of actual medical data
-	OffChainPointer string `json:"offChainPointer"`  // IPFS CID
-	ZKPProofHash    string `json:"zkpProofHash"`     // hash of ZKP proof registered by off-chain gateway
+	PatientID       string `json:"patientId"`       // SHA-256 hash of patient identifier
+	PatientIdentity string `json:"patientIdentity"` // Authenticated Fabric x509 identity derived via cid.GetID()
+	DataHash        string `json:"dataHash"`         // SHA-256 of actual medical data payload
+	OffChainPointer string `json:"offChainPointer"`  // IPFS CID or off-chain pointer
+	ZKPProofHash    string `json:"zkpProofHash"`     // Hash of verified ZKP proof registered off-chain
 	AccessPolicy    string `json:"accessPolicy"`     // JSON-encoded policy
 	Timestamp       string `json:"timestamp"`
 	RecordType      string `json:"recordType"`       // e.g. "diagnosis", "prescription"
@@ -102,6 +103,7 @@ func (c *ZeroTrustBlockContract) CreateHealthRecord(
 	record := HealthRecord{
 		RecordID:        recordID,
 		PatientID:       patientID,
+		PatientIdentity: creatorID, // Binds record to authenticated caller identity
 		DataHash:        dataHash,
 		OffChainPointer: offChainPointer,
 		ZKPProofHash:    zkpProofHash,
@@ -122,7 +124,7 @@ func (c *ZeroTrustBlockContract) CreateHealthRecord(
 }
 
 // ============================================================
-// ReadHealthRecord - retrieve a record (enforces Zero Trust policy, consent & Fabric identity)
+// ReadHealthRecord - retrieve a record & commit immutable audit log
 // ============================================================
 func (c *ZeroTrustBlockContract) ReadHealthRecord(
 	ctx contractapi.TransactionContextInterface,
@@ -163,7 +165,7 @@ func (c *ZeroTrustBlockContract) ReadHealthRecord(
 	// Zero Trust: evaluate policy with authenticated identity and role attributes
 	granted, zkpVerified := c.evaluateAccessPolicy(ctx, record.AccessPolicy, clientMSP, zkpProofHash)
 
-	// Always write immutable access log entry
+	// Write audit log to ledger state (persisted when executed via SubmitTransaction)
 	if logErr := c.logAccess(ctx, recordID, requesterID, "READ", granted, zkpVerified); logErr != nil {
 		return nil, fmt.Errorf("failed to write audit log: %v", logErr)
 	}
@@ -201,9 +203,9 @@ func (c *ZeroTrustBlockContract) RevokeConsent(
 		return fmt.Errorf("failed to unmarshal: %v", err)
 	}
 
-	// Identity Authorization: caller must match record creator or patient identity hash
-	if record.PatientID != patientID && record.CreatorID != callerID {
-		return fmt.Errorf("unauthorized: caller identity %s does not match patient or record creator", callerID)
+	// Identity Authorization: caller MUST match PatientIdentity or CreatorID
+	if callerID != record.PatientIdentity && callerID != record.CreatorID {
+		return fmt.Errorf("unauthorized: caller identity %s is neither patient nor record creator", callerID)
 	}
 
 	timestamp, err := getTxTimestampString(ctx)
@@ -303,7 +305,8 @@ func (c *ZeroTrustBlockContract) GetAccessLogs(
 // Internal helpers
 // ============================================================
 
-// evaluateAccessPolicy - Zero Trust access policy evaluation (MSP + Certificate Role Attributes)
+// evaluateAccessPolicy - Zero Trust access policy evaluation
+// Fails closed on invalid policy JSON or missing required role attributes
 func (c *ZeroTrustBlockContract) evaluateAccessPolicy(
 	ctx contractapi.TransactionContextInterface,
 	policyJSON, clientMSP, zkpProofHash string,
@@ -312,11 +315,10 @@ func (c *ZeroTrustBlockContract) evaluateAccessPolicy(
 		return false, false
 	}
 
-	// Parse Policy JSON
+	// SECURITY FIX (Point #2): Policy parsing failure MUST fail closed (deny access)
 	var policy AccessPolicyRule
 	if err := json.Unmarshal([]byte(policyJSON), &policy); err != nil {
-		// Fallback: require non-empty ZKP proof hash
-		return true, true
+		return false, false
 	}
 
 	// Enforce ZKP Requirement
@@ -338,20 +340,22 @@ func (c *ZeroTrustBlockContract) evaluateAccessPolicy(
 		}
 	}
 
-	// Enforce Allowed Roles (via Fabric client certificate attribute)
+	// SECURITY FIX (Point #1): Enforce Allowed Roles strictly (fail closed if role attribute is missing/invalid when roles are required)
 	if len(policy.AllowedRoles) > 0 {
-		roleAttr, found, _ := ctx.GetClientIdentity().GetAttributeValue("role")
-		if found && roleAttr != "" {
-			roleAllowed := false
-			for _, role := range policy.AllowedRoles {
-				if strings.EqualFold(role, roleAttr) {
-					roleAllowed = true
-					break
-				}
+		roleAttr, found, err := ctx.GetClientIdentity().GetAttributeValue("role")
+		if err != nil || !found || strings.TrimSpace(roleAttr) == "" {
+			return false, true
+		}
+
+		roleAllowed := false
+		for _, role := range policy.AllowedRoles {
+			if strings.EqualFold(role, roleAttr) {
+				roleAllowed = true
+				break
 			}
-			if !roleAllowed {
-				return false, true
-			}
+		}
+		if !roleAllowed {
+			return false, true
 		}
 	}
 

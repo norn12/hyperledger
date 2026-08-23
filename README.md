@@ -1,20 +1,21 @@
 # 🛡️ ZeroTrustBlock — Hyperledger Fabric + ZKP
 
-[![Hyperledger Fabric](https://img.shields.io/badge/Hyperledger_Fabric-v2.4.9-2F3136?logo=hyperledger&logoColor=white)](https://www.hyperledger.org/use/fabric)
+[![Hyperledger Fabric](https://img.shields.io/badge/Hyperledger_Fabric-v2.4.9_LTS-2F3136?logo=hyperledger&logoColor=white)](https://www.hyperledger.org/use/fabric)
 [![Go](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go&logoColor=white)](https://go.dev/)
 [![Node.js](https://img.shields.io/badge/Node.js-18+-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 [![Docker](https://img.shields.io/badge/Docker-20.10+-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
-**ZeroTrustBlock** is an enterprise-grade, privacy-preserving healthcare data sharing platform combining **Hyperledger Fabric v2.4** and **Zero-Knowledge Proofs (ZKP)** built with [gnark](https://github.com/Consensys/gnark) (BN254 curve, Groth16 zk-SNARKs).
+**ZeroTrustBlock** is an enterprise-grade, privacy-preserving healthcare data sharing platform combining **Hyperledger Fabric v2.4 LTS** and **Zero-Knowledge Proofs (ZKP)** built with [gnark](https://github.com/Consensys/gnark) (BN254 curve, Groth16 zk-SNARKs).
 
 ---
 
-## 🌟 Architecture & Key Features
+## 🌟 Architecture & Security Model
 
 - **Multi-Org Enterprise Topology**: 2 Organizations (`HospitalMSP` & `InsurerMSP`) spanning 4 peer nodes and a fault-tolerant 3-node Raft consensus cluster (`etcdraft` tolerates 1 node failure).
 - **Off-Chain Trusted ZKP Prover/Verifier**: The Go Gateway generates and cryptographically verifies Groth16 proofs (`gnark` BN254) before submitting proof hashes to Fabric; the chaincode enforces the presence of a verified-proof hash artifact and evaluates client access policy rules.
-- **Authenticated Access Control Policy**: Chaincode validates JSON access policies, authenticated certificate identity (`cid.GetID()`), client MSP identity, role attributes, and patient consent status on every transaction.
+- **Fail-Closed Access Control Policy**: Chaincode validates JSON access policies, authenticated certificate identity (`cid.GetID()`), client MSP identity, role attributes, and patient consent status. Any policy parsing error or missing required role attribute results in immediate access denial (`false`).
+- **Immutable On-Chain Audit Logging**: `ReadHealthRecord` is executed as a submitted Fabric transaction (`SubmitTransaction`), guaranteeing that every read access attempt generates an immutable, on-chain state update recorded on the ledger.
 - **Deterministic Smart Contract**: Chaincode utilizes Fabric proposal timestamps (`GetTxTimestamp()`) ensuring 100% deterministic execution across endorsing peers.
 - **Multi-Org Endorsement Policy**: Strict `AND('HospitalMSP.member', 'InsurerMSP.member')` policy requiring multi-organization validation.
 - **Revocation Safety**: Real-time patient consent revocation immediately blocks subsequent read attempts across all organizations.
@@ -33,7 +34,7 @@ graph TD
     Gateway -->|3. Submit Verified Proof Hash| PeerI1[Insurer Org - Peer1 :10051]
     PeerH0 -->|4. AND Endorsement| Orderers[3-Node Raft Cluster :7050, :8050, :9050]
     PeerI0 -->|4. AND Endorsement| Orderers
-    Orderers -->|5. Commit Block| Ledger[(Fabric Ledger State)]
+    Orderers -->|5. Commit Block + Audit Log| Ledger[(Fabric Ledger State)]
 ```
 
 ---
@@ -54,12 +55,11 @@ ZeroTrustBlock includes two distinct benchmark suites:
 
 ---
 
-## 📋 Prerequisites
+## 📋 Technical Stack & Versioning
 
-- **OS**: Linux (Ubuntu 20.04/22.04 LTS recommended) or macOS
-- **Docker**: `v20.10+` & **Docker Compose** `v2.0+`
-- **Go**: `v1.22+`
-- **Node.js**: `v18+` & `npm v9+`
+- **Fabric Engine**: Hyperledger Fabric `v2.4.9` LTS line (selected for container reproducibility and stability across test environments).
+- **Client SDK**: `github.com/hyperledger/fabric-sdk-go` `v1.0.0` with Go 1.22.2 compatibility.
+- **ZKP Backend**: `github.com/consensys/gnark` `v0.9.1` (Groth16 over BN254 pairing-friendly elliptic curve).
 
 ---
 
@@ -82,12 +82,12 @@ chmod +x full_reset.sh network.sh deploy.sh caliper_test.sh
 ├── benchmark/               # Go stress test harness (Real & Simulation modes)
 ├── caliper/                 # Hyperledger Caliper v0.7 benchmark suite
 ├── chaincode/               # Smart contract (Go fabric-contract-api)
-│   └── main.go              # Zero Trust logic, cid.GetID(), role checks & GetTxTimestamp()
+│   └── main.go              # Fail-closed Zero Trust logic, cid.GetID(), role checks & GetTxTimestamp()
 ├── configtx/                # Network topology & channel profiles (3 Raft consenters)
 ├── crypto-config/           # Identity certificates configuration (3 orderer specs)
 ├── gateway/                 # Client gateway SDK (Fabric SDK Go + ZKP integration)
 │   ├── connection-profile.yaml # Network connection profile (fixed peers/orderers structure)
-│   └── gateway.go           # High-level client API & ZKP pipeline
+│   └── gateway.go           # High-level client API & ZKP pipeline (SubmitTransaction for reads)
 ├── zkp/                     # Zero-Knowledge Proof circuits (gnark)
 │   └── health_circuits.go   # Groth16 age range & diagnosis circuits
 ├── docker-compose.yml       # 3 Raft orderers & 4 peer containers
@@ -95,13 +95,6 @@ chmod +x full_reset.sh network.sh deploy.sh caliper_test.sh
 ├── full_reset.sh            # Automated end-to-end deployment script
 └── network.sh               # Cryptogen & configtxgen network bootstrapper
 ```
-
----
-
-## 🔐 Security & Architecture Notes
-
-- **Off-Chain Payload Management**: The architecture is designed to keep medical record payloads off-chain; the current implementation computes SHA-256 data integrity hashes and stores off-chain IPFS pointers on Fabric.
-- **Docker Socket**: Local development containers mount `/var/run/docker.sock` for peer chaincode container management. Production deployments should utilize external Chaincode-as-a-Service (CCaaS).
 
 ---
 
