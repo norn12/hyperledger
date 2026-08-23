@@ -86,6 +86,10 @@ type ZKPService struct {
 // Setup - compiles circuits and generates proving/verifying keys
 // Call once at startup; keys can be saved to disk for reuse
 func (s *ZKPService) Setup() error {
+	if s.ageRangeR1CS != nil && s.diagR1CS != nil {
+		return nil // Proving and verifying keys already compiled & cached
+	}
+
 	fmt.Println("[ZKP] Compiling AgeRange circuit...")
 	ageCircuit := &AgeRangeCircuit{}
 	r1cs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, ageCircuit)

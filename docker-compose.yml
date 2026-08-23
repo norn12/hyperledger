@@ -1,7 +1,7 @@
 version: '3.7'
 
 # ZeroTrustBlock - Hyperledger Fabric Network Topology:
-#   - 2 Raft ordering nodes (orderer1:7050, orderer2:8050)
+#   - 3 Raft ordering nodes (orderer1:7050, orderer2:8050, orderer3:9050 — 1 node fault tolerance)
 #   - 4 Peer nodes (Hospital Org: peer0:7051, peer1:8051; Insurer Org: peer0:9051, peer1:10051)
 #   - 2 CA nodes (ca.hospital:7054, ca.insurer:8054)
 
@@ -12,6 +12,7 @@ networks:
 volumes:
   orderer1.zerotrust.com:
   orderer2.zerotrust.com:
+  orderer3.zerotrust.com:
   peer0.hospital.zerotrust.com:
   peer1.hospital.zerotrust.com:
   peer0.insurer.zerotrust.com:
@@ -55,7 +56,7 @@ services:
       - zerotrust
 
   # ============================================================
-  # Orderer Nodes (RAFT consensus — as used in paper)
+  # Orderer Nodes (3-node RAFT consensus cluster — tolerates 1 node crash)
   # ============================================================
   orderer1.zerotrust.com:
     image: hyperledger/fabric-orderer:2.4
@@ -112,6 +113,34 @@ services:
     ports:
       - "8050:8050"
     container_name: orderer2.zerotrust.com
+    networks:
+      - zerotrust
+
+  orderer3.zerotrust.com:
+    image: hyperledger/fabric-orderer:2.4
+    environment:
+      - FABRIC_LOGGING_SPEC=INFO
+      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+      - ORDERER_GENERAL_LISTENPORT=9050
+      - ORDERER_GENERAL_LOCALMSPID=OrdererMSP
+      - ORDERER_GENERAL_LOCALMSPDIR=/var/hyperledger/orderer/msp
+      - ORDERER_GENERAL_TLS_ENABLED=true
+      - ORDERER_GENERAL_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_TLS_CERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_TLS_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_GENERAL_BOOTSTRAPMETHOD=file
+      - ORDERER_GENERAL_BOOTSTRAPFILE=/var/hyperledger/orderer/genesis.block
+      - ORDERER_CHANNELPARTICIPATION_ENABLED=false
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric
+    command: orderer
+    volumes:
+      - ./crypto-config/ordererOrganizations/zerotrust.com/orderers/orderer3.zerotrust.com/msp:/var/hyperledger/orderer/msp
+      - ./crypto-config/ordererOrganizations/zerotrust.com/orderers/orderer3.zerotrust.com/tls:/var/hyperledger/orderer/tls
+      - ./configtx/genesis.block:/var/hyperledger/orderer/genesis.block
+      - orderer3.zerotrust.com:/var/hyperledger/production/orderer
+    ports:
+      - "9050:9050"
+    container_name: orderer3.zerotrust.com
     networks:
       - zerotrust
 

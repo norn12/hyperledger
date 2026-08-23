@@ -71,6 +71,22 @@ orderers:
       ssl-target-name-override: orderer1.zerotrust.com
       hostnameOverride: orderer1.zerotrust.com
 
+  orderer2.zerotrust.com:
+    url: grpcs://127.0.0.1:8050
+    tlsCACerts:
+      path: ../crypto-config/ordererOrganizations/zerotrust.com/orderers/orderer2.zerotrust.com/tls/ca.crt
+    grpcOptions:
+      ssl-target-name-override: orderer2.zerotrust.com
+      hostnameOverride: orderer2.zerotrust.com
+
+  orderer3.zerotrust.com:
+    url: grpcs://127.0.0.1:9050
+    tlsCACerts:
+      path: ../crypto-config/ordererOrganizations/zerotrust.com/orderers/orderer3.zerotrust.com/tls/ca.crt
+    grpcOptions:
+      ssl-target-name-override: orderer3.zerotrust.com
+      hostnameOverride: orderer3.zerotrust.com
+
 certificateAuthorities:
   ca.hospital.zerotrust.com:
     url: https://127.0.0.1:7054

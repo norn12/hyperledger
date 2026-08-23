@@ -59,6 +59,7 @@ Orderer: &OrdererDefaults
   Addresses:
     - orderer1.zerotrust.com:7050
     - orderer2.zerotrust.com:8050
+    - orderer3.zerotrust.com:9050
   BatchTimeout: 200ms
   BatchSize:
     MaxMessageCount: 500
@@ -100,6 +101,10 @@ Profiles:
             Port: 8050
             ClientTLSCert: ../crypto-config/ordererOrganizations/zerotrust.com/orderers/orderer2.zerotrust.com/tls/server.crt
             ServerTLSCert: ../crypto-config/ordererOrganizations/zerotrust.com/orderers/orderer2.zerotrust.com/tls/server.crt
+          - Host: orderer3.zerotrust.com
+            Port: 9050
+            ClientTLSCert: ../crypto-config/ordererOrganizations/zerotrust.com/orderers/orderer3.zerotrust.com/tls/server.crt
+            ServerTLSCert: ../crypto-config/ordererOrganizations/zerotrust.com/orderers/orderer3.zerotrust.com/tls/server.crt
     Consortiums:
       SampleConsortium:
         Organizations:

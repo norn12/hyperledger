@@ -15,12 +15,13 @@ type HealthRecord struct {
 	PatientID       string `json:"patientId"`       // hashed, never plaintext
 	DataHash        string `json:"dataHash"`         // SHA-256 of actual medical data
 	OffChainPointer string `json:"offChainPointer"`  // IPFS CID
-	ZKPProofHash    string `json:"zkpProofHash"`     // hash of ZKP proof for audit
+	ZKPProofHash    string `json:"zkpProofHash"`     // hash of ZKP proof registered by off-chain gateway
 	AccessPolicy    string `json:"accessPolicy"`     // JSON-encoded policy
 	Timestamp       string `json:"timestamp"`
 	RecordType      string `json:"recordType"`       // e.g. "diagnosis", "prescription"
 	ConsentGranted  bool   `json:"consentGranted"`
 	CreatorMSP      string `json:"creatorMsp"`
+	CreatorID       string `json:"creatorId"`
 }
 
 // AccessPolicyRule defines authorization policy requirements
@@ -34,7 +35,7 @@ type AccessPolicyRule struct {
 type AccessLog struct {
 	LogID       string `json:"logId"`
 	RecordID    string `json:"recordId"`
-	RequesterID string `json:"requesterId"`
+	RequesterID string `json:"requesterId"` // Verified x509 identity derived via cid.GetID()
 	Action      string `json:"action"`
 	Timestamp   string `json:"timestamp"`
 	Granted     bool   `json:"granted"`
@@ -56,12 +57,12 @@ func getTxTimestampString(ctx contractapi.TransactionContextInterface) (string, 
 }
 
 // ============================================================
-// CreateHealthRecord - write a new encrypted health record
+// CreateHealthRecord - write a new health record
 // ============================================================
 func (c *ZeroTrustBlockContract) CreateHealthRecord(
 	ctx contractapi.TransactionContextInterface,
 	recordID string,
-	patientID string, // should be hashed by gateway before sending
+	patientID string, // hashed patient ID
 	dataHash string,
 	offChainPointer string,
 	zkpProofHash string,
@@ -83,15 +84,19 @@ func (c *ZeroTrustBlockContract) CreateHealthRecord(
 		return err
 	}
 
-	// Extract creator identity MSP
+	// Extract creator identity from Fabric client certificate
 	creatorMSP, err := ctx.GetClientIdentity().GetMSPID()
 	if err != nil {
 		creatorMSP = "UNKNOWN"
 	}
+	creatorID, err := ctx.GetClientIdentity().GetID()
+	if err != nil {
+		creatorID = "UNKNOWN"
+	}
 
-	// Default default policy if empty
+	// Default policy if empty
 	if strings.TrimSpace(accessPolicy) == "" {
-		accessPolicy = `{"requireZKP":true,"allowedMSPs":["HospitalMSP","InsurerMSP"]}`
+		accessPolicy = `{"requireZKP":true,"allowedMSPs":["HospitalMSP","InsurerMSP"],"allowedRoles":["doctor","insurer"]}`
 	}
 
 	record := HealthRecord{
@@ -105,6 +110,7 @@ func (c *ZeroTrustBlockContract) CreateHealthRecord(
 		RecordType:      recordType,
 		ConsentGranted:  true,
 		CreatorMSP:      creatorMSP,
+		CreatorID:       creatorID,
 	}
 
 	recordBytes, err := json.Marshal(record)
@@ -116,14 +122,19 @@ func (c *ZeroTrustBlockContract) CreateHealthRecord(
 }
 
 // ============================================================
-// ReadHealthRecord - retrieve a record (enforces Zero Trust access policy & consent)
+// ReadHealthRecord - retrieve a record (enforces Zero Trust policy, consent & Fabric identity)
 // ============================================================
 func (c *ZeroTrustBlockContract) ReadHealthRecord(
 	ctx contractapi.TransactionContextInterface,
 	recordID string,
-	requesterID string,
-	zkpProofHash string, // requester must supply verified ZKP proof hash
+	zkpProofHash string, // verified ZKP proof hash registered by gateway
 ) (*HealthRecord, error) {
+	// Derive authentic requester identity directly from Fabric certificate
+	requesterID, err := ctx.GetClientIdentity().GetID()
+	if err != nil || requesterID == "" {
+		requesterID = "UNKNOWN_CLIENT"
+	}
+
 	recordBytes, err := ctx.GetStub().GetState(recordID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read state: %v", err)
@@ -137,28 +148,28 @@ func (c *ZeroTrustBlockContract) ReadHealthRecord(
 		return nil, fmt.Errorf("failed to unmarshal record: %v", err)
 	}
 
-	// CRITICAL FIX: Check Consent Revocation FIRST
+	// Check Consent Revocation FIRST
 	if !record.ConsentGranted {
 		_ = c.logAccess(ctx, recordID, requesterID, "READ", false, false)
 		return nil, fmt.Errorf("access denied: patient consent has been revoked for record %s", recordID)
 	}
 
-	// Extract requester MSP ID
+	// Extract client MSP ID
 	clientMSP, err := ctx.GetClientIdentity().GetMSPID()
 	if err != nil {
 		clientMSP = "UNKNOWN"
 	}
 
-	// Zero Trust: verify access policy and identity
-	granted, zkpVerified := c.evaluateAccessPolicy(record.AccessPolicy, requesterID, clientMSP, zkpProofHash)
+	// Zero Trust: evaluate policy with authenticated identity and role attributes
+	granted, zkpVerified := c.evaluateAccessPolicy(ctx, record.AccessPolicy, clientMSP, zkpProofHash)
 
-	// Always log the access attempt for immutable audit trail
+	// Always write immutable access log entry
 	if logErr := c.logAccess(ctx, recordID, requesterID, "READ", granted, zkpVerified); logErr != nil {
-		return nil, fmt.Errorf("failed to record access log: %v", logErr)
+		return nil, fmt.Errorf("failed to write audit log: %v", logErr)
 	}
 
 	if !granted {
-		return nil, fmt.Errorf("access denied for requester %s (MSP: %s) on record %s", requesterID, clientMSP, recordID)
+		return nil, fmt.Errorf("access denied for identity %s (MSP: %s) on record %s", requesterID, clientMSP, recordID)
 	}
 
 	return &record, nil
@@ -172,6 +183,11 @@ func (c *ZeroTrustBlockContract) RevokeConsent(
 	recordID string,
 	patientID string,
 ) error {
+	callerID, err := ctx.GetClientIdentity().GetID()
+	if err != nil {
+		return fmt.Errorf("failed to extract caller identity: %v", err)
+	}
+
 	recordBytes, err := ctx.GetStub().GetState(recordID)
 	if err != nil {
 		return fmt.Errorf("failed to read state: %v", err)
@@ -185,14 +201,9 @@ func (c *ZeroTrustBlockContract) RevokeConsent(
 		return fmt.Errorf("failed to unmarshal: %v", err)
 	}
 
-	// Identity Verification: verify client identity owns/created record or matches patientID
-	clientMSP, err := ctx.GetClientIdentity().GetMSPID()
-	if err != nil {
-		return fmt.Errorf("failed to get client MSP: %v", err)
-	}
-
-	if record.PatientID != patientID && record.CreatorMSP != clientMSP {
-		return fmt.Errorf("unauthorized: caller identity (MSP: %s) does not match patient or record creator", clientMSP)
+	// Identity Authorization: caller must match record creator or patient identity hash
+	if record.PatientID != patientID && record.CreatorID != callerID {
+		return fmt.Errorf("unauthorized: caller identity %s does not match patient or record creator", callerID)
 	}
 
 	timestamp, err := getTxTimestampString(ctx)
@@ -213,7 +224,7 @@ func (c *ZeroTrustBlockContract) RevokeConsent(
 	}
 
 	// Log consent revocation event
-	return c.logAccess(ctx, recordID, patientID, "REVOKE_CONSENT", true, false)
+	return c.logAccess(ctx, recordID, callerID, "REVOKE_CONSENT", true, false)
 }
 
 // ============================================================
@@ -232,7 +243,7 @@ func (c *ZeroTrustBlockContract) UpdateZKPProof(
 		return fmt.Errorf("record %s not found", recordID)
 	}
 
-	// Verify authorization: caller must be member of an authorized MSP
+	// Verify authorization: caller must be member of HospitalMSP or InsurerMSP
 	clientMSP, err := ctx.GetClientIdentity().GetMSPID()
 	if err != nil || (clientMSP != "HospitalMSP" && clientMSP != "InsurerMSP") {
 		return fmt.Errorf("unauthorized: client MSP %s is not permitted to update ZKP proof", clientMSP)
@@ -292,8 +303,11 @@ func (c *ZeroTrustBlockContract) GetAccessLogs(
 // Internal helpers
 // ============================================================
 
-// evaluateAccessPolicy - Zero Trust access policy evaluation
-func (c *ZeroTrustBlockContract) evaluateAccessPolicy(policyJSON, requesterID, clientMSP, zkpProofHash string) (bool, bool) {
+// evaluateAccessPolicy - Zero Trust access policy evaluation (MSP + Certificate Role Attributes)
+func (c *ZeroTrustBlockContract) evaluateAccessPolicy(
+	ctx contractapi.TransactionContextInterface,
+	policyJSON, clientMSP, zkpProofHash string,
+) (bool, bool) {
 	if strings.TrimSpace(zkpProofHash) == "" {
 		return false, false
 	}
@@ -301,10 +315,7 @@ func (c *ZeroTrustBlockContract) evaluateAccessPolicy(policyJSON, requesterID, c
 	// Parse Policy JSON
 	var policy AccessPolicyRule
 	if err := json.Unmarshal([]byte(policyJSON), &policy); err != nil {
-		// Fallback policy: require ZKP proof and valid MSP
-		if zkpProofHash == "" {
-			return false, false
-		}
+		// Fallback: require non-empty ZKP proof hash
 		return true, true
 	}
 
@@ -327,10 +338,27 @@ func (c *ZeroTrustBlockContract) evaluateAccessPolicy(policyJSON, requesterID, c
 		}
 	}
 
+	// Enforce Allowed Roles (via Fabric client certificate attribute)
+	if len(policy.AllowedRoles) > 0 {
+		roleAttr, found, _ := ctx.GetClientIdentity().GetAttributeValue("role")
+		if found && roleAttr != "" {
+			roleAllowed := false
+			for _, role := range policy.AllowedRoles {
+				if strings.EqualFold(role, roleAttr) {
+					roleAllowed = true
+					break
+				}
+			}
+			if !roleAllowed {
+				return false, true
+			}
+		}
+	}
+
 	return true, true
 }
 
-// logAccess - writes an immutable access log entry (deterministic & error checking)
+// logAccess - writes an immutable access log entry
 func (c *ZeroTrustBlockContract) logAccess(
 	ctx contractapi.TransactionContextInterface,
 	recordID, requesterID, action string,
@@ -343,7 +371,7 @@ func (c *ZeroTrustBlockContract) logAccess(
 		return fmt.Errorf("failed to get tx timestamp: %v", err)
 	}
 
-	logID := fmt.Sprintf("%s-%s-%s", recordID, requesterID, txID)
+	logID := fmt.Sprintf("%s-%s", recordID, txID)
 	entry := AccessLog{
 		LogID:       logID,
 		RecordID:    recordID,

@@ -72,10 +72,9 @@ func NewGateway(cfg GatewayConfig) (*ZeroTrustGateway, error) {
 	// Initialize gnark ZKP Circuits & Proving/Verifying Keys
 	zkpSvc := &zkp.ZKPService{}
 	if err := zkpSvc.Setup(); err != nil {
-		fmt.Printf("[Gateway] Warning: ZKP Setup error: %v (falling back to lightweight mode)\n", err)
-	} else {
-		fmt.Println("[Gateway] ZKP Engine active with gnark BN254 Groth16 circuits")
+		return nil, fmt.Errorf("failed to initialize ZKP circuit engine: %v", err)
 	}
+	fmt.Println("[Gateway] ZKP Engine active with gnark BN254 Groth16 circuits")
 
 	return &ZeroTrustGateway{
 		cfg:        cfg,
@@ -87,7 +86,7 @@ func NewGateway(cfg GatewayConfig) (*ZeroTrustGateway, error) {
 }
 
 // ============================================================
-// WriteHealthRecord - generate ZKP proof, encrypt hash, and submit to Fabric
+// WriteHealthRecord - generate ZKP proof, hash data, and submit to Fabric
 // Pipeline: Client Data -> ZKP Proof -> Cryptographic Verify -> Fabric Transaction
 // ============================================================
 func (g *ZeroTrustGateway) WriteHealthRecord(
@@ -103,25 +102,26 @@ func (g *ZeroTrustGateway) WriteHealthRecord(
 		StartTime: time.Now().UnixMilli(),
 	}
 
-	// Step 1: Generate & Verify Real Zero-Knowledge Proof (gnark Groth16)
-	var zkpProofHash string
-	if g.zkpService != nil {
-		// Generate proof that age is in range [18, 120] without revealing exact age
-		proofResult, err := g.zkpService.ProveAgeRange(patientAge, 18, 120)
-		if err == nil && proofResult.IsValid {
-			m.ZKPGenMs = proofResult.GenTimeMs
-			m.ZKPVerifyMs = proofResult.VerifyTimeMs
-			m.ProofSizeBytes = proofResult.ProofSizeBytes
-			zkpProofHash = proofResult.ProofHash
-			fmt.Printf("[Gateway ZKP] Proof generated & verified in %dms (size: %dB, hash: %s)\n",
-				m.ZKPGenMs+m.ZKPVerifyMs, m.ProofSizeBytes, zkpProofHash[:12])
-		} else {
-			// Fallback string hash
-			zkpProofHash = hashString(fmt.Sprintf("zkp-age-%d-%d", patientAge, time.Now().UnixNano()))
-		}
-	} else {
-		zkpProofHash = hashString(fmt.Sprintf("zkp-age-%d-%d", patientAge, time.Now().UnixNano()))
+	// Step 1: Generate & Cryptographically Verify Real Zero-Knowledge Proof (gnark Groth16)
+	if g.zkpService == nil {
+		return "", nil, fmt.Errorf("ZKP circuit engine is uninitialized")
 	}
+
+	proofResult, err := g.zkpService.ProveAgeRange(patientAge, 18, 120)
+	if err != nil {
+		return "", nil, fmt.Errorf("ZKP proof generation failed: %w", err)
+	}
+	if !proofResult.IsValid {
+		return "", nil, fmt.Errorf("ZKP proof verification failed: invalid zk-SNARK witness/proof")
+	}
+
+	m.ZKPGenMs = proofResult.GenTimeMs
+	m.ZKPVerifyMs = proofResult.VerifyTimeMs
+	m.ProofSizeBytes = proofResult.ProofSizeBytes
+	zkpProofHash := proofResult.ProofHash
+
+	fmt.Printf("[Gateway ZKP] Groth16 proof generated & verified in %dms (size: %dB, hash: %s)\n",
+		m.ZKPGenMs+m.ZKPVerifyMs, m.ProofSizeBytes, zkpProofHash[:12])
 
 	// Step 2: Hash patient ID for privacy (never store plaintext)
 	hashedPatientID := hashString(patientID)
@@ -137,7 +137,7 @@ func (g *ZeroTrustGateway) WriteHealthRecord(
 	recordID := fmt.Sprintf("rec-%s-%d", hashedPatientID[:8], time.Now().UnixNano())
 
 	// Step 5: Enforce Zero Trust Access Policy JSON
-	accessPolicy := `{"requireZKP": true, "allowedMSPs": ["HospitalMSP", "InsurerMSP"]}`
+	accessPolicy := `{"requireZKP": true, "allowedMSPs": ["HospitalMSP", "InsurerMSP"], "allowedRoles": ["doctor", "insurer"]}`
 
 	// Step 6: Submit to Fabric chaincode
 	contract := g.network.GetContract(g.cfg.HealthChaincode)
@@ -173,7 +173,6 @@ func (g *ZeroTrustGateway) WriteHealthRecord(
 // ============================================================
 func (g *ZeroTrustGateway) ReadHealthRecord(
 	recordID string,
-	requesterID string,
 	patientAge int,
 ) (map[string]interface{}, *TransactionMetrics, error) {
 	m := &TransactionMetrics{
@@ -182,27 +181,28 @@ func (g *ZeroTrustGateway) ReadHealthRecord(
 		StartTime: time.Now().UnixMilli(),
 	}
 
-	// Step 1: Generate & Verify ZKP Proof for reader request
-	var zkpProofHash string
-	if g.zkpService != nil {
-		proofResult, err := g.zkpService.ProveAgeRange(patientAge, 18, 120)
-		if err == nil && proofResult.IsValid {
-			m.ZKPGenMs = proofResult.GenTimeMs
-			m.ZKPVerifyMs = proofResult.VerifyTimeMs
-			m.ProofSizeBytes = proofResult.ProofSizeBytes
-			zkpProofHash = proofResult.ProofHash
-		} else {
-			zkpProofHash = hashString(fmt.Sprintf("zkp-read-%s", recordID))
-		}
-	} else {
-		zkpProofHash = hashString(fmt.Sprintf("zkp-read-%s", recordID))
+	// Step 1: Generate & Cryptographically Verify ZKP Proof for reader request
+	if g.zkpService == nil {
+		return nil, nil, fmt.Errorf("ZKP circuit engine is uninitialized")
 	}
+
+	proofResult, err := g.zkpService.ProveAgeRange(patientAge, 18, 120)
+	if err != nil {
+		return nil, nil, fmt.Errorf("ZKP proof generation failed: %w", err)
+	}
+	if !proofResult.IsValid {
+		return nil, nil, fmt.Errorf("ZKP proof verification failed: invalid zk-SNARK witness/proof")
+	}
+
+	m.ZKPGenMs = proofResult.GenTimeMs
+	m.ZKPVerifyMs = proofResult.VerifyTimeMs
+	m.ProofSizeBytes = proofResult.ProofSizeBytes
+	zkpProofHash := proofResult.ProofHash
 
 	contract := g.network.GetContract(g.cfg.HealthChaincode)
 	result, err := contract.EvaluateTransaction(
 		"ReadHealthRecord",
 		recordID,
-		requesterID,
 		zkpProofHash,
 	)
 

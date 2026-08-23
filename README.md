@@ -12,9 +12,9 @@
 
 ## 🌟 Architecture & Key Features
 
-- **Multi-Org Enterprise Topology**: 2 Organizations (`HospitalMSP` & `InsurerMSP`) spanning 4 peer nodes and a Raft consensus orderer cluster (`etcdraft`).
-- **End-to-End ZKP Integration**: Real zero-knowledge range circuits (`AgeRangeCircuit`, `DiagnosisCategoryCircuit`) compiled and verified client-side in the Go Gateway SDK before Fabric invocation.
-- **Enforced Zero Trust Policy**: Chaincode validates JSON access policies, client MSP identity (via Fabric `cid` package), consent status, and ZKP proof validity on every transaction.
+- **Multi-Org Enterprise Topology**: 2 Organizations (`HospitalMSP` & `InsurerMSP`) spanning 4 peer nodes and a fault-tolerant 3-node Raft consensus cluster (`etcdraft` tolerates 1 node failure).
+- **Off-Chain Trusted ZKP Prover/Verifier**: The Go Gateway generates and cryptographically verifies Groth16 proofs (`gnark` BN254) before submitting proof hashes to Fabric; the chaincode enforces the presence of a verified-proof hash artifact and evaluates client access policy rules.
+- **Authenticated Access Control Policy**: Chaincode validates JSON access policies, authenticated certificate identity (`cid.GetID()`), client MSP identity, role attributes, and patient consent status on every transaction.
 - **Deterministic Smart Contract**: Chaincode utilizes Fabric proposal timestamps (`GetTxTimestamp()`) ensuring 100% deterministic execution across endorsing peers.
 - **Multi-Org Endorsement Policy**: Strict `AND('HospitalMSP.member', 'InsurerMSP.member')` policy requiring multi-organization validation.
 - **Revocation Safety**: Real-time patient consent revocation immediately blocks subsequent read attempts across all organizations.
@@ -27,11 +27,13 @@
 graph TD
     Client[Client / Healthcare Application] -->|1. Raw Data + Age Claim| Gateway[Go Gateway SDK]
     Gateway -->|2. Generate & Verify zk-SNARK| ZKP[gnark ZKP Engine (Groth16/BN254)]
-    Gateway -->|3. Submit Proof + SHA-256 Hash| PeerH0[Peer0 Hospital (7051)]
-    Gateway -->|3. Submit Proof + SHA-256 Hash| PeerI0[Peer0 Insurer (9051)]
-    PeerH0 -->|4. AND Endorsement| Orderer[Raft Orderers (orderer1:7050, orderer2:8050)]
-    PeerI0 -->|4. AND Endorsement| Orderer
-    Orderer -->|5. Commit Block| Ledger[(Fabric Ledger State)]
+    Gateway -->|3. Submit Verified Proof Hash| PeerH0[Hospital Org - Peer0 :7051]
+    Gateway -->|3. Submit Verified Proof Hash| PeerH1[Hospital Org - Peer1 :8051]
+    Gateway -->|3. Submit Verified Proof Hash| PeerI0[Insurer Org - Peer0 :9051]
+    Gateway -->|3. Submit Verified Proof Hash| PeerI1[Insurer Org - Peer1 :10051]
+    PeerH0 -->|4. AND Endorsement| Orderers[3-Node Raft Cluster :7050, :8050, :9050]
+    PeerI0 -->|4. AND Endorsement| Orderers
+    Orderers -->|5. Commit Block| Ledger[(Fabric Ledger State)]
 ```
 
 ---
@@ -71,36 +73,6 @@ chmod +x full_reset.sh network.sh deploy.sh caliper_test.sh
 ./full_reset.sh
 ```
 
-### Manual Component Steps
-
-1. **Start Network**:
-   ```bash
-   ./network.sh up
-   ```
-
-2. **Deploy Chaincode**:
-   ```bash
-   ./deploy.sh
-   ```
-
-3. **Populate Gateway Wallet**:
-   ```bash
-   cd gateway
-   go run cmd/populate/main.go
-   cd ..
-   ```
-
-4. **Execute Real Network Benchmark**:
-   ```bash
-   cd benchmark
-   go run cmd/real/main.go
-   ```
-
-5. **Run Caliper Benchmark**:
-   ```bash
-   ./caliper_test.sh
-   ```
-
 ---
 
 ## 📁 Repository Structure
@@ -110,15 +82,15 @@ chmod +x full_reset.sh network.sh deploy.sh caliper_test.sh
 ├── benchmark/               # Go stress test harness (Real & Simulation modes)
 ├── caliper/                 # Hyperledger Caliper v0.7 benchmark suite
 ├── chaincode/               # Smart contract (Go fabric-contract-api)
-│   └── main.go              # Zero Trust logic, consent checks & GetTxTimestamp()
-├── configtx/                # Network topology & channel profiles
-├── crypto-config/           # Identity certificates configuration
+│   └── main.go              # Zero Trust logic, cid.GetID(), role checks & GetTxTimestamp()
+├── configtx/                # Network topology & channel profiles (3 Raft consenters)
+├── crypto-config/           # Identity certificates configuration (3 orderer specs)
 ├── gateway/                 # Client gateway SDK (Fabric SDK Go + ZKP integration)
-│   ├── connection-profile.yaml # Network connection profile (fixed structure)
+│   ├── connection-profile.yaml # Network connection profile (fixed peers/orderers structure)
 │   └── gateway.go           # High-level client API & ZKP pipeline
 ├── zkp/                     # Zero-Knowledge Proof circuits (gnark)
 │   └── health_circuits.go   # Groth16 age range & diagnosis circuits
-├── docker-compose.yml       # Raft orderers & 4 peer containers
+├── docker-compose.yml       # 3 Raft orderers & 4 peer containers
 ├── deploy.sh                # Multi-org lifecycle chaincode installer
 ├── full_reset.sh            # Automated end-to-end deployment script
 └── network.sh               # Cryptogen & configtxgen network bootstrapper
@@ -128,7 +100,7 @@ chmod +x full_reset.sh network.sh deploy.sh caliper_test.sh
 
 ## 🔐 Security & Architecture Notes
 
-- **Off-Chain Data & IPFS**: Actual medical record payloads are stored in off-chain encrypted storage (e.g. IPFS), while only SHA-256 data hashes, IPFS CIDs, and ZKP proof hashes are committed on-chain.
+- **Off-Chain Payload Management**: The architecture is designed to keep medical record payloads off-chain; the current implementation computes SHA-256 data integrity hashes and stores off-chain IPFS pointers on Fabric.
 - **Docker Socket**: Local development containers mount `/var/run/docker.sock` for peer chaincode container management. Production deployments should utilize external Chaincode-as-a-Service (CCaaS).
 
 ---
