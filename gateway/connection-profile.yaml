@@ -1,0 +1,111 @@
+name: "ZeroTrustNetwork"
+version: "1.0.0"
+
+client:
+  organization: HospitalOrg
+  connection:
+    timeout:
+      peer:
+        endorser: '300'
+    options:
+      discovery:
+        enabled: true
+        as_127.0.0.1: true
+
+organizations:
+  HospitalOrg:
+    mspid: HospitalMSP
+    peers:
+      - peer0.hospital.zerotrust.com
+      - peer1.hospital.zerotrust.com
+    certificateAuthorities:
+      - ca.hospital.zerotrust.com
+
+  InsurerOrg:
+    mspid: InsurerMSP
+    peers:
+      - peer0.insurer.zerotrust.com
+      - peer1.insurer.zerotrust.com
+    certificateAuthorities:
+      - ca.insurer.zerotrust.com
+
+peers:
+  peer0.hospital.zerotrust.com:
+    url: grpcs://127.0.0.1:7051
+    tlsCACerts:
+      path: ../crypto-config/peerOrganizations/hospital.zerotrust.com/peers/peer0.hospital.zerotrust.com/tls/ca.crt
+    grpcOptions:
+      ssl-target-name-override: peer0.hospital.zerotrust.com
+      hostnameOverride: peer0.hospital.zerotrust.com
+
+orderers:
+  orderer1.zerotrust.com:
+    url: grpcs://127.0.0.1:7050
+    tlsCACerts:
+      path: ../crypto-config/ordererOrganizations/zerotrust.com/orderers/orderer1.zerotrust.com/tls/ca.crt
+    grpcOptions:
+      ssl-target-name-override: orderer1.zerotrust.com
+      hostnameOverride: orderer1.zerotrust.com
+
+  peer1.hospital.zerotrust.com:
+    url: grpcs://127.0.0.1:8051
+    tlsCACerts:
+      path: ../crypto-config/peerOrganizations/hospital.zerotrust.com/peers/peer1.hospital.zerotrust.com/tls/ca.crt
+    grpcOptions:
+      ssl-target-name-override: peer1.hospital.zerotrust.com
+      hostnameOverride: peer1.hospital.zerotrust.com
+
+  peer0.insurer.zerotrust.com:
+    url: grpcs://127.0.0.1:9051
+    tlsCACerts:
+      path: ../crypto-config/peerOrganizations/insurer.zerotrust.com/peers/peer0.insurer.zerotrust.com/tls/ca.crt
+    grpcOptions:
+      ssl-target-name-override: peer0.insurer.zerotrust.com
+      hostnameOverride: peer0.insurer.zerotrust.com
+
+  peer1.insurer.zerotrust.com:
+    url: grpcs://127.0.0.1:10051
+    tlsCACerts:
+      path: ../crypto-config/peerOrganizations/insurer.zerotrust.com/peers/peer1.insurer.zerotrust.com/tls/ca.crt
+    grpcOptions:
+      ssl-target-name-override: peer1.insurer.zerotrust.com
+      hostnameOverride: peer1.insurer.zerotrust.com
+
+certificateAuthorities:
+  ca.hospital.zerotrust.com:
+    url: https://127.0.0.1:7054
+    caName: ca.hospital.zerotrust.com
+    tlsCACerts:
+      path: ../crypto-config/peerOrganizations/hospital.zerotrust.com/ca/ca.hospital.zerotrust.com-cert.pem
+    httpOptions:
+      verify: false
+
+  ca.insurer.zerotrust.com:
+    url: https://127.0.0.1:8054
+    caName: ca.insurer.zerotrust.com
+    tlsCACerts:
+      path: ../crypto-config/peerOrganizations/insurer.zerotrust.com/ca/ca.insurer.zerotrust.com-cert.pem
+    httpOptions:
+      verify: false
+
+# Standard SDK Options
+entityMatchers:
+  peer:
+    - pattern: (\w+)\.hospital\.zerotrust\.com:(\d+)
+      urlSubstitutionExp: 127.0.0.1:$2
+    - pattern: (\w+)\.insurer\.zerotrust\.com:(\d+)
+      urlSubstitutionExp: 127.0.0.1:$2
+
+channels:
+  healthchannel:
+    peers:
+      peer0.hospital.zerotrust.com:
+        endorsingPeer: true
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: true
+      peer0.insurer.zerotrust.com:
+        endorsingPeer: true
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: true

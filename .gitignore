@@ -1,0 +1,48 @@
+# Node.js dependencies & logs
+node_modules/
+**/node_modules/
+package-lock.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Hyperledger Fabric generated crypto material
+crypto-config/peerOrganizations/
+crypto-config/ordererOrganizations/
+
+# Fabric sample binaries & downloaded tools
+fabric-samples/
+
+# Hyperledger Fabric runtime artifacts & channels
+*.block
+*.tx
+configtx/*.block
+configtx/*.tx
+health.tar.gz
+*.zip
+*.tar.gz
+
+# Caliper test outputs
+caliper/report.html
+**/report.html
+
+# Gateway wallet (generated at runtime)
+gateway/wallet/
+**/wallet/
+
+# Go build & test outputs
+*.out
+*.test
+*.exe
+benchmark/benchmark_results.csv
+benchmark/benchmark_results.json
+
+# IDE & OS specific files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+.env.local
+.env

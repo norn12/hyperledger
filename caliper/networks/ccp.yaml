@@ -1,0 +1,73 @@
+name: ZeroTrustNetwork
+version: 1.0.0
+client:
+  organization: HospitalOrg
+  connection:
+    timeout:
+      peer:
+        endorser: '300'
+organizations:
+  HospitalOrg:
+    mspid: HospitalMSP
+    peers:
+      - peer0.hospital.zerotrust.com
+    certificateAuthorities:
+      - ca.hospital.zerotrust.com
+
+channels:
+  healthchannel:
+    orderers:
+      - orderer1.zerotrust.com
+    peers:
+      peer0.hospital.zerotrust.com:
+        endorsingPeer: true
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: true
+
+peers:
+  peer0.hospital.zerotrust.com:
+    url: grpcs://127.0.0.1:7051
+    tlsCACerts:
+      pem: |
+        -----BEGIN CERTIFICATE-----
+        MIICcDCCAhegAwIBAgIQV+UU6rJ6EDoUjG3fkSOZ9TAKBggqhkjOPQQDAjCBgjEL
+        MAkGA1UEBhMCVVMxEzARBgNVBAgTCkNhbGlmb3JuaWExFjAUBgNVBAcTDVNhbiBG
+        cmFuY2lzY28xHzAdBgNVBAoTFmhvc3BpdGFsLnplcm90cnVzdC5jb20xJTAjBgNV
+        BAMTHHRsc2NhLmhvc3BpdGFsLnplcm90cnVzdC5jb20wHhcNMjYwNDA2MTQyNjAw
+        WhcNMzYwNDAzMTQyNjAwWjCBgjELMAkGA1UEBhMCVVMxEzARBgNVBAgTCkNhbGlm
+        b3JuaWExFjAUBgNVBAcTDVNhbiBGcmFuY2lzY28xHzAdBgNVBAoTFmhvc3BpdGFs
+        Lnplcm90cnVzdC5jb20xJTAjBgNVBAMTHHRsc2NhLmhvc3BpdGFsLnplcm90cnVz
+        dC5jb20wWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAARxKR2dYqsnCo1a5BG0U2d0
+        g2UQCUztHTra00e0JaPOT9yjXDnTWY3GUxq4JfW/vP/JbkkMVu4r9cBMN81aSvte
+        o20wazAOBgNVHQ8BAf8EBAMCAaYwHQYDVR0lBBYwFAYIKwYBBQUHAwIGCCsGAQUF
+        BwMBMA8GA1UdEwEB/wQFMAMBAf8wKQYDVR0OBCIEIOiLtQWwDrZTL35Q0DSQR2ei
+        WSaaoQlB+BBWcyOAsWDxMAoGCCqGSM49BAMCA0cAMEQCIE6DtwJMvgnSe75XBl5o
+        dHmk7uFYYd7iU9adghPUImQ2AiA+b/j7zxHyEh34cnYcoSJNpSfQs6nhfPSSITj1
+        kEgMZw==
+        -----END CERTIFICATE-----
+    grpcOptions:
+      ssl-target-name-override: peer0.hospital.zerotrust.com
+
+orderers:
+  orderer1.zerotrust.com:
+    url: grpcs://127.0.0.1:7050
+    tlsCACerts:
+      pem: |
+        -----BEGIN CERTIFICATE-----
+        MIICTTCCAfKgAwIBAgIRAKIN0H/U0XDmLkTaZUcYTLgwCgYIKoZIzj0EAwIwcDEL
+        MAkGA1UEBhMCVVMxEzARBgNVBAgTCkNhbGlmb3JuaWExFjAUBgNVBAcTDVNhbiBG
+        cmFuY2lzY28xFjAUBgNVBAoTDXplcm90cnVzdC5jb20xHDAaBgNVBAMTE3Rsc2Nh
+        Lnplcm90cnVzdC5jb20wHhcNMjYwNDA2MTQyNjAwWhcNMzYwNDAzMTQyNjAwWjBw
+        MQswCQYDVQQGEwJVUzETMBEGA1UECBMKQ2FsaWZvcm5pYTEWMBQGA1UEBxMNU2Fu
+        IEZyYW5jaXNjbzEWMBQGA1UEChMNemVyb3RydXN0LmNvbTEcMBoGA1UEAxMTdGxz
+        Y2EuemVyb3RydXN0LmNvbTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABCUMzttd
+        diLPKoTuSxKGN3sWnXMMpUdrBJWqkSBlIjKu4B/qLU6fGG0EYc74xH5t09usgcvg
+        jaeg5QunpTncYt+jbTBrMA4GA1UdDwEB/wQEAwIBpjAdBgNVHSUEFjAUBggrBgEF
+        BQcDAgYIKwYBBQUHAwEwDwYDVR0TAQH/BAUwAwEB/zApBgNVHQ4EIgQgO2sBwysM
+        J1y93PfJUmrFttkWahfY0C7fSji0Z6s1F4cwCgYIKoZIzj0EAwIDSQAwRgIhAJTo
+        o0dOgy3wmTyWwCxmVbYqGC79i6P29abFdqk7h/jLAiEAuHMheidFJhWZ0pflHqn0
+        /Tqu0xaBhOXLlEXUoSwKCcA=
+        -----END CERTIFICATE-----
+    grpcOptions:
+      ssl-target-name-override: orderer1.zerotrust.com

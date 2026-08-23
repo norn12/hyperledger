@@ -1,0 +1,25 @@
+OrdererOrgs:
+  - Name: Orderer
+    Domain: zerotrust.com
+    Specs:
+      - Hostname: orderer1
+        SANS: ["localhost", "127.0.0.1"]
+      - Hostname: orderer2
+        SANS: ["localhost", "127.0.0.1"]
+
+PeerOrgs:
+  - Name: Hospital
+    Domain: hospital.zerotrust.com
+    Template:
+      Count: 2
+      SANS: ["localhost", "127.0.0.1"]
+    Users:
+      Count: 1
+
+  - Name: Insurer
+    Domain: insurer.zerotrust.com
+    Template:
+      Count: 2
+      SANS: ["localhost", "127.0.0.1"]
+    Users:
+      Count: 1

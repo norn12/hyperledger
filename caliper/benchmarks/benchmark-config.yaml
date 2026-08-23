@@ -1,0 +1,33 @@
+test:
+  name: zerotrust-benchmark
+  description: Benchmark for ZeroTrustBlock Healthcare Network
+  workers:
+    type: local
+    number: 5
+  rounds:
+    - label: warmup
+      description: Warmup round at 500 TPS
+      txNumber: 2000
+      rateControl:
+        type: fixed-rate
+        opts:
+          tps: 500
+      workload:
+        module: benchmarks/workload.js
+    - label: stress-test
+      description: Stress test round targeting 2500 TPS
+      txNumber: 15000
+      rateControl:
+        type: fixed-rate
+        opts:
+          tps: 2500
+      workload:
+        module: benchmarks/workload.js
+
+monitor:
+  type:
+    - docker
+  docker:
+    name:
+      - all
+  interval: 5

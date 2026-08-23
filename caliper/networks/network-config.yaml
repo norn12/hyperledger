@@ -1,0 +1,22 @@
+name: ZeroTrustNetwork
+version: 2.0.0
+caliper:
+  blockchain: fabric
+
+channels:
+  - channelName: healthchannel
+    contracts:
+      - id: health
+
+organizations:
+  - mspid: HospitalMSP
+    identities:
+      certificates:
+        - name: admin
+          clientPrivateKey:
+            path: ../crypto-config/peerOrganizations/hospital.zerotrust.com/users/Admin@hospital.zerotrust.com/msp/keystore/priv_sk
+          clientSignedCert:
+            path: ../crypto-config/peerOrganizations/hospital.zerotrust.com/users/Admin@hospital.zerotrust.com/msp/signcerts/Admin@hospital.zerotrust.com-cert.pem
+    connectionProfile:
+      path: networks/ccp.yaml
+      discover: false

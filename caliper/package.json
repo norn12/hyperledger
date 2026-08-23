@@ -1,0 +1,19 @@
+{
+  "name": "caliper",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "benchmark": "NODE_TLS_REJECT_UNAUTHORIZED=0 node node_modules/@hyperledger/caliper-cli/caliper.js launch manager --caliper-workspace ./ --caliper-networkconfig networks/network-config.yaml --caliper-benchconfig benchmarks/benchmark-config.yaml --caliper-flow-only-test --caliper-bind-sut fabric:2.2"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@hyperledger/caliper-cli": "^0.7.1"
+  },
+  "dependencies": {
+    "fabric-network": "^2.2.20"
+  }
+}

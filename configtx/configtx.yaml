@@ -1,0 +1,118 @@
+Organizations:
+  - &OrdererMSP
+    Name: OrdererMSP
+    ID: OrdererMSP
+    MSPDir: ../crypto-config/ordererOrganizations/zerotrust.com/msp
+    Policies:
+      Readers: {Type: Signature, Rule: "OR('OrdererMSP.admin', 'OrdererMSP.peer', 'OrdererMSP.member')"}
+      Writers: {Type: Signature, Rule: "OR('OrdererMSP.admin', 'OrdererMSP.peer', 'OrdererMSP.member')"}
+      Admins: {Type: Signature, Rule: "OR('OrdererMSP.admin')"}
+      Endorsement: {Type: Signature, Rule: "OR('OrdererMSP.admin', 'OrdererMSP.peer', 'OrdererMSP.member')"}
+
+  - &HospitalMSP
+    Name: HospitalMSP
+    ID: HospitalMSP
+    MSPDir: ../crypto-config/peerOrganizations/hospital.zerotrust.com/msp
+    Policies:
+      Readers: {Type: Signature, Rule: "OR('HospitalMSP.admin', 'HospitalMSP.peer', 'HospitalMSP.member')"}
+      Writers: {Type: Signature, Rule: "OR('HospitalMSP.admin', 'HospitalMSP.peer', 'HospitalMSP.member')"}
+      Admins: {Type: Signature, Rule: "OR('HospitalMSP.admin')"}
+      Endorsement: {Type: Signature, Rule: "OR('HospitalMSP.admin', 'HospitalMSP.peer', 'HospitalMSP.member')"}
+    AnchorPeers:
+      - Host: peer0.hospital.zerotrust.com
+        Port: 7051
+
+  - &InsurerMSP
+    Name: InsurerMSP
+    ID: InsurerMSP
+    MSPDir: ../crypto-config/peerOrganizations/insurer.zerotrust.com/msp
+    Policies:
+      Readers: {Type: Signature, Rule: "OR('InsurerMSP.admin', 'InsurerMSP.peer', 'InsurerMSP.member')"}
+      Writers: {Type: Signature, Rule: "OR('InsurerMSP.admin', 'InsurerMSP.peer', 'InsurerMSP.member')"}
+      Admins: {Type: Signature, Rule: "OR('InsurerMSP.admin')"}
+      Endorsement: {Type: Signature, Rule: "OR('InsurerMSP.admin', 'InsurerMSP.peer', 'InsurerMSP.member')"}
+    AnchorPeers:
+      - Host: peer0.insurer.zerotrust.com
+        Port: 9051
+
+Capabilities:
+  Channel: &ChannelCapabilities
+    V2_0: true
+  Orderer: &OrdererCapabilities
+    V2_0: true
+  Application: &ApplicationCapabilities
+    V2_0: true
+
+Application: &ApplicationDefaults
+  Organizations:
+  Policies:
+    Readers: {Type: ImplicitMeta, Rule: "ANY Readers"}
+    Writers: {Type: ImplicitMeta, Rule: "ANY Writers"}
+    Admins: {Type: ImplicitMeta, Rule: "MAJORITY Admins"}
+    LifecycleEndorsement: {Type: ImplicitMeta, Rule: "MAJORITY Endorsement"}
+    Endorsement: {Type: ImplicitMeta, Rule: "MAJORITY Endorsement"}
+  Capabilities:
+    <<: *ApplicationCapabilities
+
+Orderer: &OrdererDefaults
+  OrdererType: etcdraft
+  Addresses:
+    - orderer1.zerotrust.com:7050
+    - orderer2.zerotrust.com:8050
+  BatchTimeout: 200ms
+  BatchSize:
+    MaxMessageCount: 500
+    AbsoluteMaxBytes: 99 MB
+    PreferredMaxBytes: 10 MB
+  Organizations:
+  Policies:
+    Readers: {Type: ImplicitMeta, Rule: "ANY Readers"}
+    Writers: {Type: ImplicitMeta, Rule: "ANY Writers"}
+    Admins: {Type: ImplicitMeta, Rule: "MAJORITY Admins"}
+    BlockValidation: {Type: ImplicitMeta, Rule: "ANY Writers"}
+
+Channel: &ChannelDefaults
+  Policies:
+    Readers: {Type: ImplicitMeta, Rule: "ANY Readers"}
+    Writers: {Type: ImplicitMeta, Rule: "ANY Writers"}
+    Admins: {Type: ImplicitMeta, Rule: "MAJORITY Admins"}
+  Capabilities:
+    <<: *ChannelCapabilities
+
+Profiles:
+  ZeroTrustOrdererGenesis:
+    <<: *ChannelDefaults
+    Capabilities:
+      <<: *ChannelCapabilities
+    Orderer:
+      <<: *OrdererDefaults
+      Organizations:
+        - *OrdererMSP
+      Capabilities:
+        <<: *OrdererCapabilities
+      EtcdRaft:
+        Consenters:
+          - Host: orderer1.zerotrust.com
+            Port: 7050
+            ClientTLSCert: ../crypto-config/ordererOrganizations/zerotrust.com/orderers/orderer1.zerotrust.com/tls/server.crt
+            ServerTLSCert: ../crypto-config/ordererOrganizations/zerotrust.com/orderers/orderer1.zerotrust.com/tls/server.crt
+          - Host: orderer2.zerotrust.com
+            Port: 8050
+            ClientTLSCert: ../crypto-config/ordererOrganizations/zerotrust.com/orderers/orderer2.zerotrust.com/tls/server.crt
+            ServerTLSCert: ../crypto-config/ordererOrganizations/zerotrust.com/orderers/orderer2.zerotrust.com/tls/server.crt
+    Consortiums:
+      SampleConsortium:
+        Organizations:
+          - *HospitalMSP
+          - *InsurerMSP
+
+  ZeroTrustChannel:
+    Consortium: SampleConsortium
+    <<: *ChannelDefaults
+    Application:
+      <<: *ApplicationDefaults
+      Organizations:
+        - *HospitalMSP
+        - *InsurerMSP
+      Capabilities:
+        <<: *ApplicationCapabilities
