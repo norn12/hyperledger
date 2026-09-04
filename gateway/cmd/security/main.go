@@ -23,7 +23,7 @@ func connect() (*fabricgw.Gateway, *fabricgw.Network) {
 		identity = "appAdmin"
 	}
 
-	gatewayDir, err := filepath.Abs("../..")
+	gatewayDir, err := filepath.Abs(".")
 	if err != nil {
 		log.Fatal(err)
 	}

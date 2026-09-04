@@ -91,8 +91,8 @@ orderers:
 
 certificateAuthorities:
   ca.hospital.zerotrust.com:
-    url: https://localhost:7054
-    caName: ca-hospital
+    url: https://ca.hospital.zerotrust.com:7054
+    caName: ca.hospital.zerotrust.com
     tlsCACerts:
       path: ../crypto-config/peerOrganizations/hospital.zerotrust.com/ca/ca.hospital.zerotrust.com-cert.pem
     registrar:
@@ -100,8 +100,8 @@ certificateAuthorities:
       enrollSecret: adminpw
 
   ca.insurer.zerotrust.com:
-    url: https://localhost:8054
-    caName: ca-insurer
+    url: https://ca.insurer.zerotrust.com:8054
+    caName: ca.insurer.zerotrust.com
     tlsCACerts:
       path: ../crypto-config/peerOrganizations/insurer.zerotrust.com/ca/ca.insurer.zerotrust.com-cert.pem
     registrar:

@@ -21,7 +21,7 @@ type UserSpec struct {
 }
 
 func main() {
-	gatewayDir, err := filepath.Abs("../..")
+	gatewayDir, err := filepath.Abs(".")
 	if err != nil {
 		log.Fatalf("failed to get absolute gateway directory: %v", err)
 	}

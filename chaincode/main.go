@@ -14,12 +14,12 @@ type HealthRecord struct {
 	RecordID        string `json:"recordId"`
 	PatientID       string `json:"patientId"`       // SHA-256 hash of patient identifier
 	PatientIdentity string `json:"patientIdentity"` // Authenticated Fabric x509 identity derived via cid.GetID()
-	DataHash        string `json:"dataHash"`         // SHA-256 of actual medical data payload
-	OffChainPointer string `json:"offChainPointer"`  // IPFS CID or off-chain pointer
-	ZKPProofHash    string `json:"zkpProofHash"`     // Hash of verified ZKP proof registered off-chain
-	AccessPolicy    string `json:"accessPolicy"`     // JSON-encoded policy
+	DataHash        string `json:"dataHash"`        // SHA-256 of actual medical data payload
+	OffChainPointer string `json:"offChainPointer"` // IPFS CID or off-chain pointer
+	ZKPProofHash    string `json:"zkpProofHash"`    // Hash of verified ZKP proof registered off-chain
+	AccessPolicy    string `json:"accessPolicy"`    // JSON-encoded policy
 	Timestamp       string `json:"timestamp"`
-	RecordType      string `json:"recordType"`       // e.g. "diagnosis", "prescription"
+	RecordType      string `json:"recordType"` // e.g. "diagnosis", "prescription"
 	ConsentGranted  bool   `json:"consentGranted"`
 	CreatorMSP      string `json:"creatorMsp"`
 	CreatorID       string `json:"creatorId"`
@@ -41,6 +41,15 @@ type AccessLog struct {
 	Timestamp   string `json:"timestamp"`
 	Granted     bool   `json:"granted"`
 	ZKPVerified bool   `json:"zkpVerified"`
+}
+
+// ReadHealthRecordResult represents the outcome of an access attempt.
+// Expected access denials are returned as successful Fabric transactions
+// so the corresponding audit log can be committed on-chain.
+type ReadHealthRecordResult struct {
+	Allowed bool          `json:"allowed"`
+	Record  *HealthRecord `json:"record,omitempty"`
+	Error   string        `json:"error,omitempty"`
 }
 
 // ZeroTrustBlockContract is the main chaincode contract
@@ -129,8 +138,8 @@ func (c *ZeroTrustBlockContract) CreateHealthRecord(
 func (c *ZeroTrustBlockContract) ReadHealthRecord(
 	ctx contractapi.TransactionContextInterface,
 	recordID string,
-	zkpProofHash string, // verified ZKP proof hash registered by gateway
-) (*HealthRecord, error) {
+	zkpProofHash string,
+) (*ReadHealthRecordResult, error) {
 	// Derive authentic requester identity directly from Fabric certificate
 	requesterID, err := ctx.GetClientIdentity().GetID()
 	if err != nil || requesterID == "" {
@@ -150,10 +159,18 @@ func (c *ZeroTrustBlockContract) ReadHealthRecord(
 		return nil, fmt.Errorf("failed to unmarshal record: %v", err)
 	}
 
-	// Check Consent Revocation FIRST
+	// Check consent revocation FIRST.
+	// This is an expected access denial, so we MUST NOT return a
+	// Fabric transaction error after writing the audit log.
 	if !record.ConsentGranted {
-		_ = c.logAccess(ctx, recordID, requesterID, "READ", false, false)
-		return nil, fmt.Errorf("access denied: patient consent has been revoked for record %s", recordID)
+		if err := c.logAccess(ctx, recordID, requesterID, "READ", false, false); err != nil {
+			return nil, fmt.Errorf("failed to write audit log: %v", err)
+		}
+
+		return &ReadHealthRecordResult{
+			Allowed: false,
+			Error:   fmt.Sprintf("access denied: patient consent has been revoked for record %s", recordID),
+		}, nil
 	}
 
 	// Extract client MSP ID
@@ -163,18 +180,43 @@ func (c *ZeroTrustBlockContract) ReadHealthRecord(
 	}
 
 	// Zero Trust: evaluate policy with authenticated identity and role attributes
-	granted, zkpVerified := c.evaluateAccessPolicy(ctx, record.AccessPolicy, clientMSP, zkpProofHash)
+	granted, zkpVerified := c.evaluateAccessPolicy(
+		ctx,
+		record.AccessPolicy,
+		clientMSP,
+		zkpProofHash,
+	)
 
-	// Write audit log to ledger state (persisted when executed via SubmitTransaction)
-	if logErr := c.logAccess(ctx, recordID, requesterID, "READ", granted, zkpVerified); logErr != nil {
-		return nil, fmt.Errorf("failed to write audit log: %v", logErr)
+	// ALWAYS write the audit event.
+	// Because expected denials now return nil error, this PutState()
+	// remains part of a valid transaction and is committed.
+	if err := c.logAccess(
+		ctx,
+		recordID,
+		requesterID,
+		"READ",
+		granted,
+		zkpVerified,
+	); err != nil {
+		return nil, fmt.Errorf("failed to write audit log: %v", err)
 	}
 
 	if !granted {
-		return nil, fmt.Errorf("access denied for identity %s (MSP: %s) on record %s", requesterID, clientMSP, recordID)
+		return &ReadHealthRecordResult{
+			Allowed: false,
+			Error: fmt.Sprintf(
+				"access denied for identity %s (MSP: %s) on record %s",
+				requesterID,
+				clientMSP,
+				recordID,
+			),
+		}, nil
 	}
 
-	return &record, nil
+	return &ReadHealthRecordResult{
+		Allowed: true,
+		Record:  &record,
+	}, nil
 }
 
 // ============================================================

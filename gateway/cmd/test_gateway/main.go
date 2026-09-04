@@ -4,20 +4,28 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
+
 	"zerotrust/gateway"
 )
 
 func main() {
+	if err := os.Chdir("../../"); err != nil {
+		log.Fatalf("failed to enter gateway directory: %v", err)
+	}
+
 	cfg := gateway.GatewayConfig{
 		ConnectionProfilePath: "connection-profile.yaml",
 		WalletPath:            "wallet",
 		OrgMSP:                "HospitalMSP",
 		ChannelName:           "healthchannel",
 		HealthChaincode:       "health",
-		UserIdentity:          "appAdmin",
+		UserIdentity:          "doctor",
 	}
 	gw, err := gateway.NewGateway(cfg)
-	if err != nil { log.Fatalf("Failed to connect to gateway: %v", err) }
+	if err != nil {
+		log.Fatalf("Failed to connect to gateway: %v", err)
+	}
 	defer gw.Close()
 
 	fmt.Println("=== Experiment F: Consent Revocation & Auditability ===")
@@ -26,7 +34,9 @@ func main() {
 	patientAge := 35
 
 	recordID, metrics, err := gw.WriteHealthRecord(patientID, data, "ipfs://consent-test", "CONSENT_TEST", patientAge)
-	if err != nil { log.Fatalf("Write record failed: %v", err) }
+	if err != nil {
+		log.Fatalf("Write record failed: %v", err)
+	}
 	fmt.Printf("[1] CREATE: ALLOW | latency=%dms | zkp=%.2fms | verify=%.2fms\n", metrics.LatencyMs, metrics.ZKPGenMs, metrics.ZKPVerifyMs)
 
 	if _, _, err = gw.ReadHealthRecord(recordID, patientAge); err != nil {
@@ -34,7 +44,9 @@ func main() {
 	}
 	fmt.Println("[2] READ before revocation: ALLOW")
 
-	if err := gw.RevokeConsent(recordID, patientID); err != nil { log.Fatalf("[3] revoke failed: %v", err) }
+	if err := gw.RevokeConsent(recordID, patientID); err != nil {
+		log.Fatalf("[3] revoke failed: %v", err)
+	}
 	fmt.Println("[3] REVOKE_CONSENT: COMMITTED")
 
 	if _, _, err = gw.ReadHealthRecord(recordID, patientAge); err == nil {
@@ -44,10 +56,14 @@ func main() {
 	}
 
 	logs, err := gw.GetAccessLogs(recordID)
-	if err != nil { log.Fatalf("[5] failed to retrieve audit logs: %v", err) }
+	if err != nil {
+		log.Fatalf("[5] failed to retrieve audit logs: %v", err)
+	}
 	encoded, _ := json.MarshalIndent(logs, "", "  ")
 	fmt.Printf("[5] Audit log entries: %d\n%s\n", len(logs), string(encoded))
-	if len(logs) < 3 { log.Fatalf("Expected at least 3 committed audit events, got %d", len(logs)) }
+	if len(logs) < 3 {
+		log.Fatalf("Expected at least 3 committed audit events, got %d", len(logs))
+	}
 
 	fmt.Println("=== EXPERIMENT F PASSED ===")
 }
