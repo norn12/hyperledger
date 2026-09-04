@@ -18,5 +18,16 @@ organizations:
           clientSignedCert:
             path: ../crypto-config/peerOrganizations/hospital.zerotrust.com/users/Admin@hospital.zerotrust.com/msp/signcerts/Admin@hospital.zerotrust.com-cert.pem
     connectionProfile:
-      path: networks/ccp.yaml
-      discover: false
+      path: networks/ccp-thesis.yaml
+      discover: true
+  - mspid: InsurerMSP
+    identities:
+      certificates:
+        - name: admin
+          clientPrivateKey:
+            path: ../crypto-config/peerOrganizations/insurer.zerotrust.com/users/Admin@insurer.zerotrust.com/msp/keystore/priv_sk
+          clientSignedCert:
+            path: ../crypto-config/peerOrganizations/insurer.zerotrust.com/users/Admin@insurer.zerotrust.com/msp/signcerts/Admin@insurer.zerotrust.com-cert.pem
+    connectionProfile:
+      path: networks/ccp-thesis.yaml
+      discover: true

@@ -1,22 +1,76 @@
 test:
-  name: zerotrust-benchmark
-  description: Benchmark for ZeroTrustBlock Healthcare Network
+  name: zerotrust-fabric-baseline
+  description: Fabric ledger baseline and scalability evaluation without Groth16 ZKP
   workers:
     type: local
     number: 5
   rounds:
     - label: warmup
-      description: Warmup round at 500 TPS
-      txNumber: 2000
+      description: Warmup before measured rounds
+      txNumber: 500
+      rateControl:
+        type: fixed-rate
+        opts:
+          tps: 100
+      workload:
+        module: benchmarks/workload.js
+    - label: load-100
+      description: Measured baseline at 100 TPS
+      txNumber: 1000
+      rateControl:
+        type: fixed-rate
+        opts:
+          tps: 100
+      workload:
+        module: benchmarks/workload.js
+    - label: load-250
+      description: Measured baseline at 250 TPS
+      txNumber: 1000
+      rateControl:
+        type: fixed-rate
+        opts:
+          tps: 250
+      workload:
+        module: benchmarks/workload.js
+    - label: load-500
+      description: Measured baseline at 500 TPS
+      txNumber: 1000
       rateControl:
         type: fixed-rate
         opts:
           tps: 500
       workload:
         module: benchmarks/workload.js
-    - label: stress-test
-      description: Stress test round targeting 2500 TPS
-      txNumber: 15000
+    - label: load-1000
+      description: Measured baseline at 1000 TPS
+      txNumber: 1000
+      rateControl:
+        type: fixed-rate
+        opts:
+          tps: 1000
+      workload:
+        module: benchmarks/workload.js
+    - label: load-1500
+      description: Measured baseline at 1500 TPS
+      txNumber: 1000
+      rateControl:
+        type: fixed-rate
+        opts:
+          tps: 1500
+      workload:
+        module: benchmarks/workload.js
+    - label: load-2000
+      description: Measured baseline at 2000 TPS
+      txNumber: 1000
+      rateControl:
+        type: fixed-rate
+        opts:
+          tps: 2000
+      workload:
+        module: benchmarks/workload.js
+    - label: load-2500
+      description: Measured baseline at 2500 TPS
+      txNumber: 1000
       rateControl:
         type: fixed-rate
         opts:

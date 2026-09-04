@@ -1,0 +1,94 @@
+name: ZeroTrustNetwork
+version: 1.0.0
+client:
+  organization: HospitalOrg
+  connection:
+    timeout:
+      peer:
+        endorser: '300'
+organizations:
+  HospitalOrg:
+    mspid: HospitalMSP
+    peers:
+      - peer0.hospital.zerotrust.com
+      - peer1.hospital.zerotrust.com
+    certificateAuthorities:
+      - ca.hospital.zerotrust.com
+  InsurerOrg:
+    mspid: InsurerMSP
+    peers:
+      - peer0.insurer.zerotrust.com
+      - peer1.insurer.zerotrust.com
+    certificateAuthorities:
+      - ca.insurer.zerotrust.com
+channels:
+  healthchannel:
+    orderers:
+      - orderer1.zerotrust.com
+      - orderer2.zerotrust.com
+      - orderer3.zerotrust.com
+    peers:
+      peer0.hospital.zerotrust.com:
+        endorsingPeer: true
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: true
+      peer1.hospital.zerotrust.com:
+        endorsingPeer: true
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: true
+      peer0.insurer.zerotrust.com:
+        endorsingPeer: true
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: true
+      peer1.insurer.zerotrust.com:
+        endorsingPeer: true
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: true
+peers:
+  peer0.hospital.zerotrust.com:
+    url: grpcs://127.0.0.1:7051
+    tlsCACerts:
+      path: ../crypto-config/peerOrganizations/hospital.zerotrust.com/peers/peer0.hospital.zerotrust.com/tls/ca.crt
+    grpcOptions:
+      ssl-target-name-override: peer0.hospital.zerotrust.com
+  peer1.hospital.zerotrust.com:
+    url: grpcs://127.0.0.1:8051
+    tlsCACerts:
+      path: ../crypto-config/peerOrganizations/hospital.zerotrust.com/peers/peer1.hospital.zerotrust.com/tls/ca.crt
+    grpcOptions:
+      ssl-target-name-override: peer1.hospital.zerotrust.com
+  peer0.insurer.zerotrust.com:
+    url: grpcs://127.0.0.1:9051
+    tlsCACerts:
+      path: ../crypto-config/peerOrganizations/insurer.zerotrust.com/peers/peer0.insurer.zerotrust.com/tls/ca.crt
+    grpcOptions:
+      ssl-target-name-override: peer0.insurer.zerotrust.com
+  peer1.insurer.zerotrust.com:
+    url: grpcs://127.0.0.1:10051
+    tlsCACerts:
+      path: ../crypto-config/peerOrganizations/insurer.zerotrust.com/peers/peer1.insurer.zerotrust.com/tls/ca.crt
+    grpcOptions:
+      ssl-target-name-override: peer1.insurer.zerotrust.com
+orderers:
+  orderer1.zerotrust.com:
+    url: grpcs://127.0.0.1:7050
+    tlsCACerts:
+      path: ../crypto-config/ordererOrganizations/zerotrust.com/orderers/orderer1.zerotrust.com/tls/ca.crt
+    grpcOptions:
+      ssl-target-name-override: orderer1.zerotrust.com
+  orderer2.zerotrust.com:
+    url: grpcs://127.0.0.1:8050
+    tlsCACerts:
+      path: ../crypto-config/ordererOrganizations/zerotrust.com/orderers/orderer2.zerotrust.com/tls/ca.crt
+    grpcOptions:
+      ssl-target-name-override: orderer2.zerotrust.com
+  orderer3.zerotrust.com:
+    url: grpcs://127.0.0.1:9050
+    tlsCACerts:
+      path: ../crypto-config/ordererOrganizations/zerotrust.com/orderers/orderer3.zerotrust.com/tls/ca.crt
+    grpcOptions:
+      ssl-target-name-override: orderer3.zerotrust.com
