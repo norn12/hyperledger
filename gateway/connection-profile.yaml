@@ -94,7 +94,7 @@ certificateAuthorities:
     url: https://localhost:7054
     caName: ca-hospital
     tlsCACerts:
-      path: ../crypto-config/peerOrganizations/hospital.zerotrust.com/ca/tls-cert.pem
+      path: ../crypto-config/peerOrganizations/hospital.zerotrust.com/ca/ca.hospital.zerotrust.com-cert.pem
     registrar:
       enrollId: admin
       enrollSecret: adminpw
@@ -103,7 +103,7 @@ certificateAuthorities:
     url: https://localhost:8054
     caName: ca-insurer
     tlsCACerts:
-      path: ../crypto-config/peerOrganizations/insurer.zerotrust.com/ca/tls-cert.pem
+      path: ../crypto-config/peerOrganizations/insurer.zerotrust.com/ca/ca.insurer.zerotrust.com-cert.pem
     registrar:
       enrollId: admin
       enrollSecret: adminpw
