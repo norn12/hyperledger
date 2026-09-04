@@ -27,7 +27,7 @@ func main() {
 
 	recordID, metrics, err := gw.WriteHealthRecord(patientID, data, "ipfs://consent-test", "CONSENT_TEST", patientAge)
 	if err != nil { log.Fatalf("Write record failed: %v", err) }
-	fmt.Printf("[1] CREATE: ALLOW | latency=%dms | zkp=%dms | verify=%dms\n", metrics.LatencyMs, metrics.ZKPGenMs, metrics.ZKPVerifyMs)
+	fmt.Printf("[1] CREATE: ALLOW | latency=%dms | zkp=%.2fms | verify=%.2fms\n", metrics.LatencyMs, metrics.ZKPGenMs, metrics.ZKPVerifyMs)
 
 	if _, _, err = gw.ReadHealthRecord(recordID, patientAge); err != nil {
 		log.Fatalf("[2] READ before revocation should succeed: %v", err)

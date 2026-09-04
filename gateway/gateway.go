@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/hyperledger/fabric-sdk-go/pkg/core/config"
@@ -22,16 +23,16 @@ type GatewayConfig struct {
 }
 
 type TransactionMetrics struct {
-	TxID           string `json:"txId"`
-	Operation      string `json:"operation"`
-	StartTime      int64  `json:"startTimeUnixMs"`
-	EndTime        int64  `json:"endTimeUnixMs"`
-	LatencyMs      int64  `json:"latencyMs"`
-	ZKPGenMs       int64  `json:"zkpGenMs"`
-	ZKPVerifyMs    int64  `json:"zkpVerifyMs"`
-	ProofSizeBytes int    `json:"proofSizeBytes"`
-	Success        bool   `json:"success"`
-	ErrorMessage   string `json:"errorMessage,omitempty"`
+	TxID           string  `json:"txId"`
+	Operation      string  `json:"operation"`
+	StartTime      int64   `json:"startTimeUnixMs"`
+	EndTime        int64   `json:"endTimeUnixMs"`
+	LatencyMs      int64   `json:"latencyMs"`
+	ZKPGenMs       float64 `json:"zkpGenMs"`
+	ZKPVerifyMs    float64 `json:"zkpVerifyMs"`
+	ProofSizeBytes int     `json:"proofSizeBytes"`
+	Success        bool    `json:"success"`
+	ErrorMessage   string  `json:"errorMessage,omitempty"`
 }
 
 type ZeroTrustGateway struct {
@@ -39,6 +40,7 @@ type ZeroTrustGateway struct {
 	gw         *gateway.Gateway
 	network    *gateway.Network
 	zkpService *zkp.ZKPService
+	mu         sync.Mutex
 	metrics    []TransactionMetrics
 }
 
@@ -88,8 +90,9 @@ func (g *ZeroTrustGateway) WriteHealthRecord(patientID string, rawData map[strin
 	contract := g.network.GetContract(g.cfg.HealthChaincode)
 	_, err = contract.SubmitTransaction("CreateHealthRecord", recordID, hashedPatientID, dataHash, offChainPointer, zkpProofHash, recordType, accessPolicy)
 	m.EndTime = time.Now().UnixMilli(); m.LatencyMs = m.EndTime - m.StartTime
-	if err != nil { m.Success = false; m.ErrorMessage = err.Error(); g.metrics = append(g.metrics, *m); return "", m, fmt.Errorf("chaincode invoke failed: %v", err) }
-	m.Success = true; g.metrics = append(g.metrics, *m)
+	g.mu.Lock()
+	if err != nil { m.Success = false; m.ErrorMessage = err.Error(); g.metrics = append(g.metrics, *m); g.mu.Unlock(); return "", m, fmt.Errorf("chaincode invoke failed: %v", err) }
+	m.Success = true; g.metrics = append(g.metrics, *m); g.mu.Unlock()
 	return recordID, m, nil
 }
 
@@ -102,10 +105,11 @@ func (g *ZeroTrustGateway) ReadHealthRecord(recordID string, patientAge int) (ma
 	m.ZKPGenMs, m.ZKPVerifyMs, m.ProofSizeBytes = proofResult.GenTimeMs, proofResult.VerifyTimeMs, proofResult.ProofSizeBytes
 	result, err := g.network.GetContract(g.cfg.HealthChaincode).SubmitTransaction("ReadHealthRecord", recordID, proofResult.ProofHash)
 	m.EndTime = time.Now().UnixMilli(); m.LatencyMs = m.EndTime - m.StartTime
-	if err != nil { m.Success = false; m.ErrorMessage = err.Error(); g.metrics = append(g.metrics, *m); return nil, m, fmt.Errorf("read failed: %v", err) }
+	g.mu.Lock()
+	if err != nil { m.Success = false; m.ErrorMessage = err.Error(); g.metrics = append(g.metrics, *m); g.mu.Unlock(); return nil, m, fmt.Errorf("read failed: %v", err) }
 	var record map[string]interface{}
-	if err := json.Unmarshal(result, &record); err != nil { return nil, m, fmt.Errorf("failed to parse result: %v", err) }
-	m.Success = true; g.metrics = append(g.metrics, *m)
+	if err := json.Unmarshal(result, &record); err != nil { g.mu.Unlock(); return nil, m, fmt.Errorf("failed to parse result: %v", err) }
+	m.Success = true; g.metrics = append(g.metrics, *m); g.mu.Unlock()
 	return record, m, nil
 }
 
@@ -124,11 +128,15 @@ func (g *ZeroTrustGateway) GetAccessLogs(recordID string) ([]map[string]interfac
 }
 
 func (g *ZeroTrustGateway) GetBenchmarkSummary() map[string]interface{} {
+	g.mu.Lock()
+	defer g.mu.Unlock()
 	if len(g.metrics) == 0 { return map[string]interface{}{"error": "no metrics collected yet"} }
-	var totalLatency, totalZKPGen, totalZKPVerify int64; var totalProofSize, successCount int
+	var totalLatency int64
+	var totalZKPGen, totalZKPVerify float64
+	var totalProofSize, successCount int
 	for _, m := range g.metrics { totalLatency += m.LatencyMs; totalZKPGen += m.ZKPGenMs; totalZKPVerify += m.ZKPVerifyMs; totalProofSize += m.ProofSizeBytes; if m.Success { successCount++ } }
-	count := int64(len(g.metrics))
-	return map[string]interface{}{"totalTransactions": count, "successRate": fmt.Sprintf("%.1f%%", float64(successCount)/float64(count)*100), "avgLatencyMs": totalLatency/count, "avgZKPGenMs": totalZKPGen/count, "avgZKPVerifyMs": totalZKPVerify/count, "avgProofSizeBytes": totalProofSize/int(count)}
+	count := float64(len(g.metrics))
+	return map[string]interface{}{"totalTransactions": int64(count), "successRate": fmt.Sprintf("%.1f%%", float64(successCount)/count*100), "avgLatencyMs": totalLatency/int64(count), "avgZKPGenMs": totalZKPGen/count, "avgZKPVerifyMs": totalZKPVerify/count, "avgProofSizeBytes": totalProofSize/int(count)}
 }
 
 func (g *ZeroTrustGateway) Close() { if g.gw != nil { g.gw.Close() } }

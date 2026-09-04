@@ -95,6 +95,8 @@ start_network() {
 teardown() {
   echo -e "${YELLOW}Tearing down network...${NC}"
   cd "$NETWORK_DIR"
+  docker stop chaincode.zerotrust.com 2>/dev/null || true
+  docker rm chaincode.zerotrust.com 2>/dev/null || true
   docker-compose down --volumes --remove-orphans
   rm -rf "$NETWORK_DIR/crypto-config/peerOrganizations"
   rm -rf "$NETWORK_DIR/crypto-config/ordererOrganizations"

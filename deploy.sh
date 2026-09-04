@@ -1,5 +1,5 @@
 #!/bin/bash
-# ZeroTrustBlock - Full Lifecycle Deployment (TLS Mode with Hostnames)
+# ZeroTrustBlock - Full Lifecycle Deployment (TLS Mode with Hostnames - CCaaS Mode)
 set -e
 
 # Setup paths
@@ -48,9 +48,26 @@ export CORE_PEER_ADDRESS=peer1.insurer.zerotrust.com:10051
 export CORE_PEER_TLS_ROOTCERT_FILE=${PROJECT_DIR}/crypto-config/peerOrganizations/insurer.zerotrust.com/peers/peer1.insurer.zerotrust.com/tls/ca.crt
 peer channel join -b ./configtx/healthchannel.block
 
-echo -e "${GREEN}=== 4. Packaging Chaincode ===${NC}"
+echo -e "${GREEN}=== 4. Packaging Chaincode (CCaaS Mode) ===${NC}"
+(cd "${PROJECT_DIR}/chaincode" && CGO_ENABLED=0 go build -o "${PROJECT_DIR}/chaincode_app" .)
 rm -f health.tar.gz
-peer lifecycle chaincode package health.tar.gz --path chaincode --lang golang --label health_1.0
+mkdir -p /tmp/ccaas
+cat <<EOF > /tmp/ccaas/connection.json
+{
+  "address": "chaincode.zerotrust.com:9999",
+  "dial_timeout": "10s",
+  "tls_required": false
+}
+EOF
+cat <<EOF > /tmp/ccaas/metadata.json
+{
+  "type": "ccaas",
+  "label": "health_1.0"
+}
+EOF
+(cd /tmp/ccaas && tar -czf code.tar.gz connection.json)
+tar -czf health.tar.gz -C /tmp/ccaas metadata.json -C /tmp/ccaas code.tar.gz
+rm -rf /tmp/ccaas
 
 echo -e "${GREEN}=== 5. Installing Chaincode on All Peers ===${NC}"
 # Insurer Peer 1 & Peer 0
@@ -96,4 +113,17 @@ peer lifecycle chaincode commit -o localhost:7050 --ordererTLSHostnameOverride o
   --peerAddresses localhost:7051 --tlsRootCertFiles ${PROJECT_DIR}/crypto-config/peerOrganizations/hospital.zerotrust.com/peers/peer0.hospital.zerotrust.com/tls/ca.crt \
   --peerAddresses localhost:9051 --tlsRootCertFiles ${PROJECT_DIR}/crypto-config/peerOrganizations/insurer.zerotrust.com/peers/peer0.insurer.zerotrust.com/tls/ca.crt
 
-echo -e "${GREEN}✓ ZeroTrustBlock Chaincode is Active across all 4 peers with AND('HospitalMSP.member', 'InsurerMSP.member') endorsement!${NC}"
+echo -e "${GREEN}=== 8. Launching CCaaS Chaincode Server Container ===${NC}"
+docker stop chaincode.zerotrust.com 2>/dev/null || true
+docker rm chaincode.zerotrust.com 2>/dev/null || true
+docker run -d --name chaincode.zerotrust.com \
+  --network zerotrust_network \
+  -p 9999:9999 \
+  -e CHAINCODE_SERVER_ADDRESS=0.0.0.0:9999 \
+  -e CHAINCODE_ID=$FULL_PACKAGE_ID \
+  -e CORE_CHAINCODE_ID_NAME=$FULL_PACKAGE_ID \
+  -v ${PROJECT_DIR}/chaincode_app:/app/chaincode_app \
+  alpine:latest /app/chaincode_app
+sleep 3
+
+echo -e "${GREEN}✓ ZeroTrustBlock Chaincode is Active across all 4 peers in CCaaS mode with AND('HospitalMSP.member', 'InsurerMSP.member') endorsement!${NC}"

@@ -1,0 +1,21 @@
+{
+  "circuit": "AgeRangeCircuit",
+  "curve": "BN254",
+  "experiment": "A - Groth16 cryptographic cost",
+  "result": {
+    "samples": 100,
+    "validProofs": 100,
+    "failedProofs": 0,
+    "avgGenerationMs": 8.47,
+    "p50GenerationMs": 8,
+    "p95GenerationMs": 9,
+    "p99GenerationMs": 10,
+    "avgVerificationMs": 0.02,
+    "p50VerificationMs": 0,
+    "p95VerificationMs": 0,
+    "p99VerificationMs": 1,
+    "avgProofSizeBytes": 753.84,
+    "totalElapsedSeconds": 0.965085911
+  },
+  "setupMs": 309.760193
+}

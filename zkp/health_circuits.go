@@ -60,13 +60,13 @@ func (c *DiagnosisCategoryCircuit) Define(api frontend.API) error {
 // ============================================================
 
 type ProofResult struct {
-	ProofBytes     []byte `json:"proofBytes"`
-	ProofHash      string `json:"proofHash"`
-	ProofSizeBytes int    `json:"proofSizeBytes"`
-	GenTimeMs      int64  `json:"genTimeMs"`
-	VerifyTimeMs   int64  `json:"verifyTimeMs"`
-	CircuitType    string `json:"circuitType"`
-	IsValid        bool   `json:"isValid"`
+	ProofBytes     []byte  `json:"proofBytes"`
+	ProofHash      string  `json:"proofHash"`
+	ProofSizeBytes int     `json:"proofSizeBytes"`
+	GenTimeMs      float64 `json:"genTimeMs"`
+	VerifyTimeMs   float64 `json:"verifyTimeMs"`
+	CircuitType    string  `json:"circuitType"`
+	IsValid        bool    `json:"isValid"`
 }
 
 // ============================================================
@@ -141,7 +141,7 @@ func (s *ZKPService) ProveAgeRange(age, minAge, maxAge int) (*ProofResult, error
 	// Measure proof generation time
 	genStart := time.Now()
 	proof, err := groth16.Prove(s.ageRangeR1CS, s.ageRangeProvingKey, witness)
-	genTimeMs := time.Since(genStart).Milliseconds()
+	genTimeMs := float64(time.Since(genStart).Nanoseconds()) / 1e6
 	if err != nil {
 		return nil, fmt.Errorf("proof generation failed: %v", err)
 	}
@@ -164,7 +164,7 @@ func (s *ZKPService) ProveAgeRange(age, minAge, maxAge int) (*ProofResult, error
 
 	verifyStart := time.Now()
 	err = groth16.Verify(proof, s.ageRangeVerifyingKey, publicWitness)
-	verifyTimeMs := time.Since(verifyStart).Milliseconds()
+	verifyTimeMs := float64(time.Since(verifyStart).Nanoseconds()) / 1e6
 	isValid := err == nil
 
 	return &ProofResult{
@@ -192,7 +192,7 @@ func (s *ZKPService) ProveDiagnosisCategory(diagCode, categoryMin, categoryMax i
 
 	genStart := time.Now()
 	proof, err := groth16.Prove(s.diagR1CS, s.diagProvingKey, witness)
-	genTimeMs := time.Since(genStart).Milliseconds()
+	genTimeMs := float64(time.Since(genStart).Nanoseconds()) / 1e6
 	if err != nil {
 		return nil, fmt.Errorf("proof generation failed: %v", err)
 	}
@@ -212,7 +212,7 @@ func (s *ZKPService) ProveDiagnosisCategory(diagCode, categoryMin, categoryMax i
 
 	verifyStart := time.Now()
 	err = groth16.Verify(proof, s.diagVerifyingKey, publicWitness)
-	verifyTimeMs := time.Since(verifyStart).Milliseconds()
+	verifyTimeMs := float64(time.Since(verifyStart).Nanoseconds()) / 1e6
 	isValid := err == nil
 
 	return &ProofResult{

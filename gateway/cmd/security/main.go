@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/hyperledger/fabric-sdk-go/pkg/core/config"
@@ -22,18 +23,27 @@ func connect() (*fabricgw.Gateway, *fabricgw.Network) {
 		identity = "appAdmin"
 	}
 
-	// This command is run from gateway/cmd/security, so the gateway wallet and
-	// connection profile are two directories above the current working directory.
-	walletPath := "../../wallet"
-	connectionProfilePath := "../../connection-profile.yaml"
+	gatewayDir, err := filepath.Abs("../..")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err := os.Chdir(gatewayDir); err != nil {
+		log.Fatalf("failed to enter gateway directory %s: %v", gatewayDir, err)
+	}
+
+	walletPath := "wallet"
+	connectionProfilePath := "connection-profile.yaml"
 
 	wallet, err := fabricgw.NewFileSystemWallet(walletPath)
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	if !wallet.Exists(identity) {
 		log.Fatalf("identity %s not found in %s", identity, walletPath)
 	}
+
 	gw, err := fabricgw.Connect(
 		fabricgw.WithConfig(config.FromFile(connectionProfilePath)),
 		fabricgw.WithIdentity(wallet, identity),
@@ -41,11 +51,13 @@ func connect() (*fabricgw.Gateway, *fabricgw.Network) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	network, err := gw.GetNetwork("healthchannel")
 	if err != nil {
 		gw.Close()
 		log.Fatal(err)
 	}
+
 	return gw, network
 }
 

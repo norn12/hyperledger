@@ -19,7 +19,7 @@ func TestZKPService(t *testing.T) {
 		if err != nil || !res.IsValid {
 			t.Fatalf("Expected valid proof for age 25, got err=%v valid=%v", err, res.IsValid)
 		}
-		t.Logf("✓ Age 25 valid proof: gen=%dms verify=%dms size=%dB", res.GenTimeMs, res.VerifyTimeMs, res.ProofSizeBytes)
+		t.Logf("✓ Age 25 valid proof: gen=%.2fms verify=%.2fms size=%dB", res.GenTimeMs, res.VerifyTimeMs, res.ProofSizeBytes)
 	})
 
 	t.Run("Age 18 in [18, 120] - Valid Boundary Min", func(t *testing.T) {

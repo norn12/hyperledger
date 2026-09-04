@@ -8,7 +8,12 @@
     "baseline": "npm run benchmark",
     "test": "echo \"Use npm run baseline to execute the Fabric baseline experiment\""
   },
-  "keywords": ["hyperledger-fabric", "caliper", "benchmark", "zerotrust"],
+  "keywords": [
+    "hyperledger-fabric",
+    "caliper",
+    "benchmark",
+    "zerotrust"
+  ],
   "author": "",
   "license": "ISC",
   "devDependencies": {
