@@ -26,9 +26,11 @@ health.tar.gz
 caliper/report.html
 **/report.html
 
-# Gateway wallet (generated at runtime)
+# Gateway wallet & keystore (generated at runtime)
 gateway/wallet/
 **/wallet/
+gateway/keystore/
+**/keystore/
 
 # Go build & test outputs
 *.out

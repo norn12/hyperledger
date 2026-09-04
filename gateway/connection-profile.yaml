@@ -15,6 +15,7 @@ client:
 organizations:
   HospitalOrg:
     mspid: HospitalMSP
+    cryptoPath: ../crypto-config/peerOrganizations/hospital.zerotrust.com/users/{username}@hospital.zerotrust.com/msp
     peers:
       - peer0.hospital.zerotrust.com
       - peer1.hospital.zerotrust.com
@@ -23,6 +24,7 @@ organizations:
 
   InsurerOrg:
     mspid: InsurerMSP
+    cryptoPath: ../crypto-config/peerOrganizations/insurer.zerotrust.com/users/{username}@insurer.zerotrust.com/msp
     peers:
       - peer0.insurer.zerotrust.com
       - peer1.insurer.zerotrust.com
@@ -89,23 +91,34 @@ orderers:
 
 certificateAuthorities:
   ca.hospital.zerotrust.com:
-    url: https://127.0.0.1:7054
-    caName: ca.hospital.zerotrust.com
+    url: https://localhost:7054
+    caName: ca-hospital
     tlsCACerts:
-      path: ../crypto-config/peerOrganizations/hospital.zerotrust.com/ca/ca.hospital.zerotrust.com-cert.pem
-    httpOptions:
-      verify: true
+      path: ../crypto-config/peerOrganizations/hospital.zerotrust.com/ca/tls-cert.pem
+    registrar:
+      enrollId: admin
+      enrollSecret: adminpw
 
   ca.insurer.zerotrust.com:
-    url: https://127.0.0.1:8054
-    caName: ca.insurer.zerotrust.com
+    url: https://localhost:8054
+    caName: ca-insurer
     tlsCACerts:
-      path: ../crypto-config/peerOrganizations/insurer.zerotrust.com/ca/ca.insurer.zerotrust.com-cert.pem
-    httpOptions:
-      verify: true
+      path: ../crypto-config/peerOrganizations/insurer.zerotrust.com/ca/tls-cert.pem
+    registrar:
+      enrollId: admin
+      enrollSecret: adminpw
 
 # Standard SDK Options
 entityMatchers:
+  certificateAuthority:
+    - pattern: (\w+)\.hospital\.zerotrust\.com:(\d+)
+      urlSubstitutionExp: https://127.0.0.1:$2
+      sslTargetOverrideUrlName: ca.hospital.zerotrust.com
+      mappedHost: ca.hospital.zerotrust.com
+    - pattern: (\w+)\.insurer\.zerotrust\.com:(\d+)
+      urlSubstitutionExp: https://127.0.0.1:$2
+      sslTargetOverrideUrlName: ca.insurer.zerotrust.com
+      mappedHost: ca.insurer.zerotrust.com
   peer:
     - pattern: (\w+)\.hospital\.zerotrust\.com:(\d+)
       urlSubstitutionExp: 127.0.0.1:$2

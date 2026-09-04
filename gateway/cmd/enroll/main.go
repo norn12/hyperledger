@@ -79,23 +79,18 @@ func main() {
 			log.Fatalf("failed to create MSP client for org %s: %v", u.OrgName, err)
 		}
 
-		// Enroll CA admin if not enrolled
-		adminIdentity, err := mspClient.GetSigningIdentity("admin")
+		// Ensure CA admin is enrolled for registration authority
+		err = mspClient.Enroll("admin", msp.WithSecret("adminpw"))
 		if err != nil {
-			err = mspClient.Enroll("admin", msp.WithSecret("adminpw"))
-			if err != nil {
-				log.Fatalf("failed to enroll CA admin for %s: %v", u.OrgName, err)
-			}
+			log.Printf("CA admin enrollment info (%s): %v", u.OrgName, err)
 		}
 
-		_ = adminIdentity
-
-		// Register user
+		// Register user as client type with custom role attribute
 		req := &msp.RegistrationRequest{
-			Name:        u.Username,
-			Type:        "user",
-			Secret:      u.Secret,
-			Affiliation: "",
+			Name:           u.Username,
+			Type:           "client",
+			Secret:         u.Secret,
+			MaxEnrollments: -1,
 			Attributes: []msp.Attribute{
 				{
 					Name:  "role",
@@ -105,13 +100,13 @@ func main() {
 			},
 		}
 
-		regSecret, err := mspClient.Register(req)
-		if err != nil {
-			// If already registered, fallback to provided default secret
+		regSecret, regErr := mspClient.Register(req)
+		if regErr != nil {
+			log.Printf("Registration note for %s (%v), attempting enrollment with provided secret...", u.Username, regErr)
 			regSecret = u.Secret
 		}
 
-		// Enroll user
+		// Enroll user certificate
 		err = mspClient.Enroll(u.Username, msp.WithSecret(regSecret))
 		if err != nil {
 			log.Fatalf("failed to enroll identity %s for %s: %v", u.Username, u.OrgName, err)
