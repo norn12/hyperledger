@@ -1,0 +1,25 @@
+version: '3.7'
+
+# Optional IPFS layer for ZeroTrustBlock.
+# Start after the Fabric network with:
+#   docker-compose -f docker-compose.ipfs.yml up -d
+#
+# The Kubo RPC API is bound to localhost only. Medical payloads are
+# encrypted by the Gateway before upload.
+
+services:
+  ipfs:
+    image: ipfs/kubo:v0.34.1
+    container_name: zerotrust-ipfs
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:4001:4001"
+      - "127.0.0.1:5001:5001"
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - ipfs_staging:/export
+      - ipfs_data:/data/ipfs
+
+volumes:
+  ipfs_staging:
+  ipfs_data:
