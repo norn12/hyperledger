@@ -1,13 +1,14 @@
 {
   "name": "caliper",
   "version": "1.0.0",
-  "description": "",
+  "description": "ZeroTrustBlock Fabric performance experiments",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "benchmark": "node node_modules/@hyperledger/caliper-cli/caliper.js launch manager --caliper-workspace ./ --caliper-networkconfig networks/network-config.yaml --caliper-benchconfig benchmarks/benchmark-config.yaml --caliper-flow-only-test --caliper-bind-sut fabric:2.2"
+    "benchmark": "node node_modules/@hyperledger/caliper-cli/caliper.js launch manager --caliper-workspace ./ --caliper-networkconfig networks/network-config.yaml --caliper-benchconfig benchmarks/benchmark-config.yaml --caliper-flow-only-test --caliper-bind-sut fabric:2.2",
+    "baseline": "npm run benchmark",
+    "test": "echo \"Use npm run baseline to execute the Fabric baseline experiment\""
   },
-  "keywords": [],
+  "keywords": ["hyperledger-fabric", "caliper", "benchmark", "zerotrust"],
   "author": "",
   "license": "ISC",
   "devDependencies": {
