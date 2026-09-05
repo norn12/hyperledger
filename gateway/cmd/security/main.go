@@ -15,6 +15,12 @@ import (
 	"zerotrust/zkp"
 )
 
+type readResult struct {
+	Allowed bool `json:"allowed"`
+	Record  json.RawMessage `json:"record"`
+	Error   string `json:"error"`
+}
+
 func hash(s string) string { h := sha256.Sum256([]byte(s)); return hex.EncodeToString(h[:]) }
 
 func connect() (*fabricgw.Gateway, *fabricgw.Network) {
@@ -73,17 +79,29 @@ func createRecord(network *fabricgw.Network) string {
 	return id
 }
 
-func readRecord(network *fabricgw.Network, id string) error {
+func readRecord(network *fabricgw.Network, id string) (bool, string, error) {
 	svc := &zkp.ZKPService{}
 	if err := svc.Setup(); err != nil {
-		return err
+		return false, "", err
 	}
 	proof, err := svc.ProveAgeRange(35, 18, 120)
 	if err != nil {
-		return err
+		return false, "", err
 	}
-	_, err = network.GetContract("health").SubmitTransaction("ReadHealthRecord", id, proof.ProofHash)
-	return err
+
+	payload, err := network.GetContract("health").SubmitTransaction("ReadHealthRecord", id, proof.ProofHash)
+	if err != nil {
+		return false, "", err
+	}
+
+	var result readResult
+	if err := json.Unmarshal(payload, &result); err != nil {
+		return false, "", fmt.Errorf("invalid ReadHealthRecord response: %w", err)
+	}
+	if result.Error != "" {
+		return result.Allowed, result.Error, nil
+	}
+	return result.Allowed, "", nil
 }
 
 func main() {
@@ -106,9 +124,17 @@ func main() {
 		if identity == "" {
 			identity = "appAdmin"
 		}
-		err := readRecord(network, id)
+
+		allowed, reason, err := readRecord(network, id)
 		if err != nil {
 			fmt.Printf("RESULT=DENY\nIDENTITY=%s\nERROR=%v\n", identity, err)
+			return
+		}
+		if !allowed {
+			fmt.Printf("RESULT=DENY\nIDENTITY=%s\n", identity)
+			if reason != "" {
+				fmt.Printf("ERROR=%s\n", reason)
+			}
 			return
 		}
 		fmt.Printf("RESULT=ALLOW\nIDENTITY=%s\n\n", identity)
@@ -117,6 +143,5 @@ func main() {
 	}
 }
 
-// Keep encoding/json referenced so the compiler catches accidental changes to
-// the audit/result serialization assumptions used by this experiment runner.
+// Keep the JSON dependency explicit for the experiment response decoder.
 var _ = json.Valid
