@@ -4,16 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"os"
 
 	"zerotrust/gateway"
 )
 
 func main() {
-	if err := os.Chdir("../../"); err != nil {
-		log.Fatalf("failed to enter gateway directory: %v", err)
-	}
-
+	// Run this command from the gateway directory:
+	//   go run ./cmd/test_gateway
+	// Paths below are intentionally relative to gateway/.
 	cfg := gateway.GatewayConfig{
 		ConnectionProfilePath: "connection-profile.yaml",
 		WalletPath:            "wallet",
