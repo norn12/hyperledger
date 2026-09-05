@@ -9,9 +9,16 @@ NC='\033[0m'
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Load local runtime configuration when present. This file is gitignored and
+# may contain the AES-256 key needed to decrypt existing IPFS objects.
+if [ -f "$PROJECT_DIR/.env.local" ]; then
+    # shellcheck disable=SC1091
+    source "$PROJECT_DIR/.env.local"
+fi
+
 echo -e "${GREEN}=== ZeroTrustBlock Full Lifecycle Start ===${NC}"
 
-# 1. Network reset. network.sh now handles CA-owned file permissions,
+# 1. Network reset. network.sh handles CA-owned file permissions,
 #    regenerates CA TLS certificates, and clears stale gateway identities.
 echo -e "${YELLOW}[1/6] Resetting Fabric Network...${NC}"
 cd "$PROJECT_DIR"
@@ -60,16 +67,38 @@ cd "$PROJECT_DIR"
 echo -e "${GREEN}✓ appAdmin, doctor and insurer identities provisioned${NC}"
 
 # 5. Ensure the separately managed IPFS service is running and configure
-#    encryption for all child processes in this reset.
-echo -e "${YELLOW}[5/6] Starting IPFS service...${NC}"
-docker-compose -f docker-compose.ipfs.yml up -d
+#    encryption. Persist a newly generated key in .env.local so a later reset
+#    can still decrypt objects already stored in the persistent IPFS volume.
+echo -e "${YELLOW}[5/6] Configuring IPFS service...${NC}"
+export ZT_IPFS_ENABLED="${ZT_IPFS_ENABLED:-true}"
+export ZT_IPFS_API_URL="${ZT_IPFS_API_URL:-http://127.0.0.1:5001/api/v0}"
+
+if [ "${ZT_IPFS_ENABLED}" = "true" ]; then
+    docker-compose -f docker-compose.ipfs.yml up -d
+
+    if [ -z "${ZT_IPFS_ENCRYPTION_KEY:-}" ]; then
+        ZT_IPFS_ENCRYPTION_KEY="$(openssl rand -hex 32)"
+        export ZT_IPFS_ENCRYPTION_KEY
+        if [ -f "$PROJECT_DIR/.env.local" ]; then
+            printf '\nexport ZT_IPFS_ENCRYPTION_KEY=%s\n' "$ZT_IPFS_ENCRYPTION_KEY" >> "$PROJECT_DIR/.env.local"
+        else
+            cat > "$PROJECT_DIR/.env.local" <<EOF
+# Local ZeroTrustBlock runtime configuration. Do not commit this file.
 export ZT_IPFS_ENABLED=true
-export ZT_IPFS_API_URL="http://127.0.0.1:5001/api/v0"
-if [ -z "${ZT_IPFS_ENCRYPTION_KEY:-}" ]; then
-    export ZT_IPFS_ENCRYPTION_KEY="$(openssl rand -hex 32)"
+export ZT_IPFS_API_URL=http://127.0.0.1:5001/api/v0
+export ZT_IPFS_ENCRYPTION_KEY=$ZT_IPFS_ENCRYPTION_KEY
+EOF
+            chmod 600 "$PROJECT_DIR/.env.local"
+        fi
+        echo -e "${GREEN}✓ Generated and persisted a new IPFS encryption key in .env.local${NC}"
+    else
+        echo -e "${GREEN}✓ Reusing existing IPFS encryption key${NC}"
+    fi
+else
+    echo -e "${YELLOW}IPFS disabled by ZT_IPFS_ENABLED=false${NC}"
 fi
 
-echo -e "${GREEN}✓ IPFS service is running and encryption is configured${NC}"
+echo -e "${GREEN}✓ IPFS configuration complete${NC}"
 
 # 6. Execution: Go Benchmark Flood
 echo -e "${YELLOW}[6/6] Launching High-Concurrency Go Benchmark...${NC}"
