@@ -17,10 +17,8 @@ import (
 	"time"
 )
 
-const maxIPFSPayloadSize = 16 << 20 // 16 MiB application payload limit
+const maxIPFSPayloadSize = 16 << 20
 
-// IPFSClient provides encrypted application-level storage through the
-// Kubo HTTP RPC API. The RPC endpoint must remain private/local.
 type IPFSClient struct {
 	APIURL string
 	Key    []byte
@@ -31,13 +29,10 @@ func NewIPFSClientFromEnv() (*IPFSClient, error) {
 	if !strings.EqualFold(strings.TrimSpace(os.Getenv("ZT_IPFS_ENABLED")), "true") {
 		return nil, nil
 	}
-
-	apiURL := strings.TrimSpace(os.Getenv("ZT_IPFS_API_URL"))
+	apiURL := strings.TrimRight(strings.TrimSpace(os.Getenv("ZT_IPFS_API_URL")), "/")
 	if apiURL == "" {
 		apiURL = "http://127.0.0.1:5001/api/v0"
 	}
-	apiURL = strings.TrimRight(apiURL, "/")
-
 	keyHex := strings.TrimSpace(os.Getenv("ZT_IPFS_ENCRYPTION_KEY"))
 	if keyHex == "" {
 		return nil, fmt.Errorf("ZT_IPFS_ENCRYPTION_KEY is required when ZT_IPFS_ENABLED=true")
@@ -49,7 +44,6 @@ func NewIPFSClientFromEnv() (*IPFSClient, error) {
 	if len(key) != 32 {
 		return nil, fmt.Errorf("ZT_IPFS_ENCRYPTION_KEY must decode to exactly 32 bytes")
 	}
-
 	return &IPFSClient{APIURL: apiURL, Key: key, HTTP: &http.Client{Timeout: 30 * time.Second}}, nil
 }
 
@@ -93,9 +87,7 @@ func (c *IPFSClient) DecryptJSON(data []byte) ([]byte, error) {
 	if len(data) < 4+nonceSize {
 		return nil, fmt.Errorf("encrypted IPFS payload is truncated")
 	}
-	nonce := data[4 : 4+nonceSize]
-	ciphertext := data[4+nonceSize:]
-	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
+	plaintext, err := gcm.Open(nil, data[4:4+nonceSize], data[4+nonceSize:], nil)
 	if err != nil {
 		return nil, fmt.Errorf("decrypt IPFS payload: %w", err)
 	}
@@ -110,7 +102,6 @@ func (c *IPFSClient) AddEncryptedJSON(data []byte, filename string) (string, err
 	if err != nil {
 		return "", err
 	}
-
 	var body bytes.Buffer
 	writer := multipart.NewWriter(&body)
 	part, err := writer.CreateFormFile("file", filename)
@@ -129,13 +120,11 @@ func (c *IPFSClient) AddEncryptedJSON(data []byte, filename string) (string, err
 		return "", fmt.Errorf("create IPFS add request: %w", err)
 	}
 	req.Header.Set("Content-Type", writer.FormDataContentType())
-
 	resp, err := c.HTTP.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("IPFS add request failed: %w", err)
 	}
 	defer resp.Body.Close()
-
 	responseBody, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	if err != nil {
 		return "", fmt.Errorf("read IPFS add response: %w", err)
@@ -143,7 +132,6 @@ func (c *IPFSClient) AddEncryptedJSON(data []byte, filename string) (string, err
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return "", fmt.Errorf("IPFS add returned HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(responseBody)))
 	}
-
 	var result struct {
 		Name string `json:"Name"`
 		Hash string `json:"Hash"`
@@ -169,9 +157,7 @@ func (c *IPFSClient) CatEncrypted(cid string) ([]byte, error) {
 	if cid == "" {
 		return nil, fmt.Errorf("empty IPFS CID")
 	}
-
-	reqURL := c.APIURL + "/cat?arg=" + url.QueryEscape(cid)
-	req, err := http.NewRequest(http.MethodPost, reqURL, nil)
+	req, err := http.NewRequest(http.MethodPost, c.APIURL+"/cat?arg="+url.QueryEscape(cid), nil)
 	if err != nil {
 		return nil, fmt.Errorf("create IPFS cat request: %w", err)
 	}
@@ -185,13 +171,13 @@ func (c *IPFSClient) CatEncrypted(cid string) ([]byte, error) {
 		return nil, fmt.Errorf("IPFS cat returned HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
 	}
 
-	// Allow a small amount of overhead for the ZTB1 header, nonce and GCM tag.
-	encrypted, err := io.ReadAll(io.LimitReader(resp.Body, maxIPFSPayloadSize+128))
+	limit := int64(maxIPFSPayloadSize + 129)
+	encrypted, err := io.ReadAll(io.LimitReader(resp.Body, limit))
 	if err != nil {
 		return nil, fmt.Errorf("read IPFS object: %w", err)
 	}
-	if len(encrypted) > maxIPFSPayloadSize+128 {
-		return nil, fmt.Errorf("encrypted IPFS object exceeds size limit")
+	if int64(len(encrypted)) >= limit {
+		return nil, fmt.Errorf("encrypted IPFS object exceeds %d MiB limit", maxIPFSPayloadSize>>20)
 	}
 	return c.DecryptJSON(encrypted)
 }
