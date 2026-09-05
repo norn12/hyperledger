@@ -44,12 +44,12 @@ type AccessLog struct {
 }
 
 // ReadHealthRecordResult represents the outcome of an access attempt.
-// Expected access denials are returned as successful Fabric transactions
-// so the corresponding audit log can be committed on-chain.
+// Every response field is present so Fabric Contract API can validate a
+// stable response schema for both allowed and denied transactions.
 type ReadHealthRecordResult struct {
 	Allowed bool          `json:"allowed"`
-	Record  *HealthRecord `json:"record,omitempty"`
-	Error   string        `json:"error,omitempty"`
+	Record  *HealthRecord `json:"record"`
+	Error   string        `json:"error"`
 }
 
 // ZeroTrustBlockContract is the main chaincode contract
@@ -159,9 +159,8 @@ func (c *ZeroTrustBlockContract) ReadHealthRecord(
 		return nil, fmt.Errorf("failed to unmarshal record: %v", err)
 	}
 
-	// Check consent revocation FIRST.
-	// This is an expected access denial, so we MUST NOT return a
-	// Fabric transaction error after writing the audit log.
+	// Check consent revocation FIRST. Expected denials return a successful
+	// transaction so the corresponding audit log is committed.
 	if !record.ConsentGranted {
 		if err := c.logAccess(ctx, recordID, requesterID, "READ", false, false); err != nil {
 			return nil, fmt.Errorf("failed to write audit log: %v", err)
@@ -169,6 +168,7 @@ func (c *ZeroTrustBlockContract) ReadHealthRecord(
 
 		return &ReadHealthRecordResult{
 			Allowed: false,
+			Record:  &record,
 			Error:   fmt.Sprintf("access denied: patient consent has been revoked for record %s", recordID),
 		}, nil
 	}
@@ -188,8 +188,6 @@ func (c *ZeroTrustBlockContract) ReadHealthRecord(
 	)
 
 	// ALWAYS write the audit event.
-	// Because expected denials now return nil error, this PutState()
-	// remains part of a valid transaction and is committed.
 	if err := c.logAccess(
 		ctx,
 		recordID,
@@ -204,6 +202,7 @@ func (c *ZeroTrustBlockContract) ReadHealthRecord(
 	if !granted {
 		return &ReadHealthRecordResult{
 			Allowed: false,
+			Record:  &record,
 			Error: fmt.Sprintf(
 				"access denied for identity %s (MSP: %s) on record %s",
 				requesterID,
@@ -216,6 +215,7 @@ func (c *ZeroTrustBlockContract) ReadHealthRecord(
 	return &ReadHealthRecordResult{
 		Allowed: true,
 		Record:  &record,
+		Error:   "",
 	}, nil
 }
 
