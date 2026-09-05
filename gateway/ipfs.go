@@ -11,10 +11,13 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
 )
+
+const maxIPFSPayloadSize = 16 << 20 // 16 MiB application payload limit
 
 // IPFSClient provides encrypted application-level storage through the
 // Kubo HTTP RPC API. The RPC endpoint must remain private/local.
@@ -24,8 +27,6 @@ type IPFSClient struct {
 	HTTP   *http.Client
 }
 
-// NewIPFSClientFromEnv enables IPFS when ZT_IPFS_ENABLED is true.
-// The encryption key must be a 32-byte AES-256 key encoded as hex.
 func NewIPFSClientFromEnv() (*IPFSClient, error) {
 	if !strings.EqualFold(strings.TrimSpace(os.Getenv("ZT_IPFS_ENABLED")), "true") {
 		return nil, nil
@@ -49,16 +50,13 @@ func NewIPFSClientFromEnv() (*IPFSClient, error) {
 		return nil, fmt.Errorf("ZT_IPFS_ENCRYPTION_KEY must decode to exactly 32 bytes")
 	}
 
-	return &IPFSClient{
-		APIURL: apiURL,
-		Key:    key,
-		HTTP:   &http.Client{Timeout: 30 * time.Second},
-	}, nil
+	return &IPFSClient{APIURL: apiURL, Key: key, HTTP: &http.Client{Timeout: 30 * time.Second}}, nil
 }
 
-// EncryptJSON serializes and encrypts application data using AES-256-GCM.
-// The returned bytes contain a small version prefix followed by nonce and ciphertext.
 func (c *IPFSClient) EncryptJSON(data []byte) ([]byte, error) {
+	if len(data) > maxIPFSPayloadSize {
+		return nil, fmt.Errorf("IPFS payload exceeds %d MiB limit", maxIPFSPayloadSize>>20)
+	}
 	block, err := aes.NewCipher(c.Key)
 	if err != nil {
 		return nil, fmt.Errorf("create AES cipher: %w", err)
@@ -79,7 +77,6 @@ func (c *IPFSClient) EncryptJSON(data []byte) ([]byte, error) {
 	return result, nil
 }
 
-// DecryptJSON reverses EncryptJSON and is provided for authorized off-chain retrieval.
 func (c *IPFSClient) DecryptJSON(data []byte) ([]byte, error) {
 	if len(data) < 4 || string(data[:4]) != "ZTB1" {
 		return nil, fmt.Errorf("invalid encrypted IPFS payload format")
@@ -102,11 +99,12 @@ func (c *IPFSClient) DecryptJSON(data []byte) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("decrypt IPFS payload: %w", err)
 	}
+	if len(plaintext) > maxIPFSPayloadSize {
+		return nil, fmt.Errorf("decrypted IPFS payload exceeds %d MiB limit", maxIPFSPayloadSize>>20)
+	}
 	return plaintext, nil
 }
 
-// AddEncryptedJSON encrypts JSON and uploads it to Kubo with pin=true.
-// It returns the CID produced by the IPFS node.
 func (c *IPFSClient) AddEncryptedJSON(data []byte, filename string) (string, error) {
 	encrypted, err := c.EncryptJSON(data)
 	if err != nil {
@@ -126,8 +124,7 @@ func (c *IPFSClient) AddEncryptedJSON(data []byte, filename string) (string, err
 		return "", fmt.Errorf("close IPFS multipart body: %w", err)
 	}
 
-	url := c.APIURL + "/add?pin=true&cid-version=1"
-	req, err := http.NewRequest(http.MethodPost, url, &body)
+	req, err := http.NewRequest(http.MethodPost, c.APIURL+"/add?pin=true&cid-version=1", &body)
 	if err != nil {
 		return "", fmt.Errorf("create IPFS add request: %w", err)
 	}
@@ -139,7 +136,7 @@ func (c *IPFSClient) AddEncryptedJSON(data []byte, filename string) (string, err
 	}
 	defer resp.Body.Close()
 
-	responseBody, err := io.ReadAll(resp.Body)
+	responseBody, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	if err != nil {
 		return "", fmt.Errorf("read IPFS add response: %w", err)
 	}
@@ -157,7 +154,6 @@ func (c *IPFSClient) AddEncryptedJSON(data []byte, filename string) (string, err
 	if err := json.Unmarshal(responseBody, &result); err != nil {
 		return "", fmt.Errorf("parse IPFS add response: %w", err)
 	}
-
 	cid := strings.TrimSpace(result.Hash)
 	if cid == "" {
 		cid = strings.TrimSpace(result.CID.String)
@@ -168,15 +164,14 @@ func (c *IPFSClient) AddEncryptedJSON(data []byte, filename string) (string, err
 	return cid, nil
 }
 
-// CatEncrypted retrieves an encrypted object by CID and decrypts it.
 func (c *IPFSClient) CatEncrypted(cid string) ([]byte, error) {
 	cid = strings.TrimSpace(strings.TrimPrefix(cid, "ipfs://"))
 	if cid == "" {
 		return nil, fmt.Errorf("empty IPFS CID")
 	}
 
-	url := c.APIURL + "/cat?arg=" + cid
-	req, err := http.NewRequest(http.MethodPost, url, nil)
+	reqURL := c.APIURL + "/cat?arg=" + url.QueryEscape(cid)
+	req, err := http.NewRequest(http.MethodPost, reqURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("create IPFS cat request: %w", err)
 	}
@@ -186,13 +181,17 @@ func (c *IPFSClient) CatEncrypted(cid string) ([]byte, error) {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		body, _ := io.ReadAll(resp.Body)
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 		return nil, fmt.Errorf("IPFS cat returned HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
 	}
 
-	encrypted, err := io.ReadAll(resp.Body)
+	// Allow a small amount of overhead for the ZTB1 header, nonce and GCM tag.
+	encrypted, err := io.ReadAll(io.LimitReader(resp.Body, maxIPFSPayloadSize+128))
 	if err != nil {
 		return nil, fmt.Errorf("read IPFS object: %w", err)
+	}
+	if len(encrypted) > maxIPFSPayloadSize+128 {
+		return nil, fmt.Errorf("encrypted IPFS object exceeds size limit")
 	}
 	return c.DecryptJSON(encrypted)
 }
