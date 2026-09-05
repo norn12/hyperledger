@@ -7,6 +7,7 @@ set -e
 NETWORK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FABRIC_VERSION="2.4.9"
 CA_VERSION="1.5.7"
+MAX_RETRIES=30
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -109,12 +110,41 @@ generate_artifacts() {
   echo -e "${GREEN}✓ Artifacts generated${NC}"
 }
 
+wait_for_network() {
+  echo -e "${YELLOW}Waiting for Raft leader and peer readiness...${NC}"
+
+  local retries=0
+  while ! docker logs orderer1.zerotrust.com 2>&1 | grep -q "Raft leader changed"; do
+    if [ "$retries" -ge "$MAX_RETRIES" ]; then
+      echo -e "${RED}Orderer failed to elect a Raft leader in time.${NC}"
+      docker logs --tail 30 orderer1.zerotrust.com 2>&1 || true
+      exit 1
+    fi
+    sleep 2
+    retries=$((retries + 1))
+  done
+
+  retries=0
+  while ! docker logs peer0.hospital.zerotrust.com 2>&1 | grep -q "Started peer"; do
+    if [ "$retries" -ge "$MAX_RETRIES" ]; then
+      echo -e "${RED}Hospital peer failed to become ready in time.${NC}"
+      docker logs --tail 30 peer0.hospital.zerotrust.com 2>&1 || true
+      exit 1
+    fi
+    sleep 2
+    retries=$((retries + 1))
+  done
+
+  echo -e "${GREEN}✓ Raft leader elected and peer network ready${NC}"
+}
+
 start_network() {
   echo -e "${YELLOW}[5/5] Starting Docker network...${NC}"
   cd "$NETWORK_DIR"
   docker-compose stop || true
   docker-compose rm -f || true
   docker-compose up -d
+  wait_for_network
   echo ""
   echo -e "${GREEN}✓ Network started!${NC}"
   echo ""
