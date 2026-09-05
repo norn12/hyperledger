@@ -47,7 +47,7 @@ func main() {
 	}
 	fmt.Printf("    record=%s latency=%dms zkp=%.2fms verify=%.2fms\n", recordID, metrics.LatencyMs, metrics.ZKPGenMs, metrics.ZKPVerifyMs)
 
-	fmt.Println("[2] READ: Fabric record + authorization")
+	fmt.Println("[2] READ: Fabric authorization + audit")
 	record, _, err := gw.ReadHealthRecord(recordID, 35)
 	if err != nil {
 		log.Fatalf("read failed: %v", err)
@@ -65,10 +65,10 @@ func main() {
 	fmt.Printf("    cid=%s\n", cid)
 	fmt.Printf("    dataHash=%v\n", record["dataHash"])
 
-	fmt.Println("[3] FETCH: IPFS CID -> decrypt -> SHA-256 integrity check -> JSON")
-	actual, err := gw.GetOffChainData(record)
+	fmt.Println("[3] FETCH: authorized record -> IPFS CID -> decrypt -> SHA-256 -> JSON")
+	actual, _, err := gw.GetAuthorizedOffChainData(recordID, 35)
 	if err != nil {
-		log.Fatalf("off-chain retrieval failed: %v", err)
+		log.Fatalf("authorized off-chain retrieval failed: %v", err)
 	}
 
 	if !reflect.DeepEqual(expected, actual) {
