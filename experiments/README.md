@@ -2,7 +2,7 @@
 
 This directory defines the experimental evaluation of **ZeroTrustBlock**, a privacy-preserving healthcare data-sharing platform built with Hyperledger Fabric and Groth16 zero-knowledge proofs.
 
-The evaluation is divided into six complementary experiments:
+The evaluation is divided into five complementary experiments:
 
 | Experiment | Evaluation | Primary purpose |
 |---|---|---|
@@ -11,7 +11,6 @@ The evaluation is divided into six complementary experiments:
 | **C** | Privacy-enabled end-to-end performance | Measure the complete ZKP + Gateway + Fabric path |
 | **D** | Fabric scalability | Evaluate throughput, latency, and success rate under increasing load |
 | **E** | Zero-Trust security matrix | Verify MSP, role, ZKP, and fail-closed access control |
-| **F** | Consent revocation and auditability | Verify consent revocation and persistent on-chain audit logging |
 
 > **Important:** Experimental results must be reported together with the exact software versions, hardware configuration, worker count, transaction count, offered load, network topology, and configuration used for the run. No measured value should be presented as a universal Hyperledger Fabric limit.
 
@@ -65,9 +64,9 @@ Experiment D progressively increases offered TPS and observes achieved throughpu
 
 ### RQ5 — Zero-Trust security
 
-**Does the system correctly enforce identity-, role-, organization-, ZKP-, and consent-based access decisions?**
+**Does the system correctly enforce identity-, role-, organization-, and ZKP-based access decisions?**
 
-Experiments E and F evaluate these security properties using Fabric identities and ledger transactions.
+Experiment E evaluates these security properties using Fabric identities and access policies.
 
 ---
 
@@ -439,90 +438,7 @@ This demonstrates that a valid Fabric identity alone does not automatically gran
 
 ---
 
-# 7. Experiment F — Consent Revocation and Auditability
-
-## Objective
-
-Verify that patient consent can be revoked and that successful and denied access attempts can be represented as persistent ledger audit events.
-
-## Execution
-
-```bash
-cd gateway/cmd/test_gateway
-go run .
-```
-
-## Test Sequence
-
-```text
-1. CREATE RECORD
-        ↓
-2. READ WITH ACTIVE CONSENT
-        ↓
-   ALLOW
-        ↓
-3. REVOKE CONSENT
-        ↓
-   COMMITTED
-        ↓
-4. READ AFTER REVOCATION
-        ↓
-   DENY
-        ↓
-5. QUERY ACCESS LOGS
-```
-
-## Expected Security Property
-
-After consent is revoked:
-
-```text
-Patient consent = false
-        ↓
-Subsequent READ
-        ↓
-DENY
-```
-
-## Auditability
-
-Each access attempt should generate an `AccessLog` entry containing:
-
-```text
-LogID
-RecordID
-RequesterID
-Action
-Timestamp
-Granted
-ZKPVerified
-```
-
-The audit entry is stored on the Fabric ledger using a composite key associated with the record and transaction ID.
-
-## Transaction Semantics
-
-A denied access decision must not write an audit event and then return a Fabric transaction error. If the transaction fails after writing the audit record, Fabric transaction semantics can roll back the state update.
-
-The intended design is therefore:
-
-```text
-READ request
-     ↓
-Evaluate authorization
-     ↓
-Write audit event
-     ↓
-Commit transaction
-     ↓
-Return ALLOW/DENY as application result
-```
-
-This allows the denial itself to remain auditable.
-
----
-
-# 8. Experimental Execution Order
+# 7. Experimental Execution Order
 
 For a clean evaluation:
 
@@ -538,15 +454,13 @@ Experiment C — Privacy-enabled E2E
 Experiment D — Scalability
        ↓
 Experiment E — Security matrix
-       ↓
-Experiment F — Consent + auditability
 ```
 
-Experiments A and B establish isolated baselines. Experiment C combines the privacy mechanism with Fabric. Experiment D evaluates network behavior under load. Experiments E and F evaluate security, consent, and auditability.
+Experiments A and B establish isolated baselines. Experiment C combines the privacy mechanism with Fabric. Experiment D evaluates network behavior under load. Experiment E evaluates Zero-Trust authorization.
 
 ---
 
-# 9. Reproducibility Requirements
+# 8. Reproducibility Requirements
 
 Every thesis result should record:
 
@@ -616,7 +530,7 @@ Configuration
 
 ---
 
-# 10. Interpretation Guidelines
+# 9. Interpretation Guidelines
 
 These experiments measure **this ZeroTrustBlock implementation under the specified test configuration**.
 
@@ -648,16 +562,15 @@ success rate
 
 ---
 
-# 11. Evidence Status
+# 10. Evidence Status
 
-The repository contains implementation support for all six experimental categories:
+The repository contains implementation support for five experimental categories:
 
 - **A:** Groth16 benchmark implementation
 - **B:** Caliper baseline workload and load configuration
 - **C:** Real Go/Fabric benchmark
 - **D:** Caliper multi-load scalability configuration
 - **E:** Security test runner and enrolled role identities
-- **F:** Consent-revocation and auditability workflow
 
 ### Results policy
 
@@ -667,7 +580,7 @@ Previously documented performance numbers should not automatically be reused if 
 
 ---
 
-# 12. Quick Reference
+# 11. Quick Reference
 
 ```bash
 # Experiment A — ZKP
@@ -694,10 +607,6 @@ go run . create
 ZT_IDENTITY=doctor go run . read <RECORD_ID>
 ZT_IDENTITY=appAdmin go run . read <RECORD_ID>
 ZT_IDENTITY=insurer go run . read <RECORD_ID>
-
-# Experiment F — Consent + auditability
-cd gateway/cmd/test_gateway
-go run .
 ```
 
 ---
@@ -715,11 +624,10 @@ ZeroTrustBlock is evaluated along three independent dimensions:
         │             │             │
         A             B             E
         │             │             │
-        C             D             F
+        C             D             │
         │             │             │
-     Groth16       Fabric        Access /
-     overhead      scaling       consent /
-                                  audit
+     Groth16       Fabric        Access
+     overhead      scaling       control
 ```
 
 Together, the experiments evaluate:
@@ -728,5 +636,4 @@ Together, the experiments evaluate:
 2. **how the underlying Fabric network performs,**
 3. **how the complete privacy-enabled path behaves,**
 4. **how performance changes under increasing load,**
-5. **whether Zero-Trust authorization is correctly enforced, and**
-6. **whether revoked access and security events remain auditable.**
+5. **whether Zero-Trust authorization is correctly enforced.**
