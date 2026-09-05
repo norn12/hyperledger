@@ -1,4 +1,4 @@
-# 🛡️ ZeroTrustBlock — Hyperledger Fabric + ZKP
+# 🛡️ ZeroTrustBlock — Hyperledger Fabric + ZKP + Encrypted IPFS
 
 [![Hyperledger Fabric](https://img.shields.io/badge/Hyperledger_Fabric-v2.4.9_LTS-2F3136?logo=hyperledger&logoColor=white)](https://www.hyperledger.org/use/fabric)
 [![Go](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go&logoColor=white)](https://go.dev/)
@@ -6,19 +6,21 @@
 [![Docker](https://img.shields.io/badge/Docker-20.10+-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
-**ZeroTrustBlock** is an enterprise-grade, privacy-preserving healthcare data sharing platform combining **Hyperledger Fabric v2.4 LTS** and **Zero-Knowledge Proofs (ZKP)** built with [gnark](https://github.com/Consensys/gnark) (BN254 curve, Groth16 zk-SNARKs).
+**ZeroTrustBlock** is a privacy-preserving healthcare data-sharing platform combining **Hyperledger Fabric v2.4 LTS**, **Groth16 zero-knowledge proofs**, and optional **AES-256-GCM encrypted IPFS off-chain storage**.
 
 ---
 
 ## 🌟 Architecture & Security Model
 
-- **Multi-Org Enterprise Topology**: 2 Organizations (`HospitalMSP` & `InsurerMSP`) spanning 4 peer nodes and a fault-tolerant 3-node Raft consensus cluster (`etcdraft` tolerates 1 node failure).
-- **Off-Chain Trusted ZKP Prover/Verifier**: The Go Gateway generates and cryptographically verifies Groth16 proofs (`gnark` BN254) before submitting proof hashes to Fabric; the chaincode enforces the presence of a verified-proof hash artifact and evaluates client access policy rules.
-- **Fail-Closed Access Control Policy**: Chaincode validates JSON access policies, authenticated certificate identity (`cid.GetID()`), client MSP identity, role attributes, and patient consent status. Any policy parsing error or missing required role attribute results in immediate access denial (`false`).
-- **Immutable On-Chain Audit Logging**: `ReadHealthRecord` is executed as a submitted Fabric transaction (`SubmitTransaction`), guaranteeing that every read access attempt generates an immutable, on-chain state update recorded on the ledger.
-- **Deterministic Smart Contract**: Chaincode utilizes Fabric proposal timestamps (`GetTxTimestamp()`) ensuring 100% deterministic execution across endorsing peers.
-- **Multi-Org Endorsement Policy**: Strict `AND('HospitalMSP.member', 'InsurerMSP.member')` policy requiring multi-organization validation.
-- **Revocation Safety**: Real-time patient consent revocation immediately blocks subsequent read attempts across all organizations.
+- **Multi-Org Enterprise Topology**: 2 Organizations (`HospitalMSP` & `InsurerMSP`) spanning 4 peer nodes and a 3-node Raft ordering cluster.
+- **Off-Chain ZKP Prover/Verifier**: The Go Gateway generates and cryptographically verifies Groth16 proofs (`gnark` BN254) before submitting proof hashes to Fabric. Chaincode enforces the presence of the required proof artifact and evaluates client access policy.
+- **Fail-Closed Access Control**: Chaincode validates JSON access policies, authenticated certificate identity (`cid.GetID()`), client MSP identity, role attributes, ZKP requirements, and patient consent status.
+- **Immutable On-Chain Audit Logging**: `ReadHealthRecord` is submitted as a Fabric transaction so successful and denied access attempts can generate immutable audit entries.
+- **Deterministic Smart Contract**: Chaincode uses Fabric proposal timestamps (`GetTxTimestamp()`) rather than local wall-clock time for ledger state.
+- **Multi-Org Endorsement Policy**: Strict `AND('HospitalMSP.member', 'InsurerMSP.member')` policy requires both organizations to endorse health-record writes.
+- **Consent Revocation**: Revoked records are denied by chaincode before the authorized Gateway retrieves their off-chain payload.
+- **Encrypted IPFS Storage**: When enabled, medical JSON is encrypted with AES-256-GCM before upload. Fabric stores the SHA-256 plaintext hash and `ipfs://<CID>` pointer.
+- **Integrity Verification**: Authorized off-chain retrieval decrypts the IPFS object and compares its plaintext SHA-256 against the immutable Fabric `dataHash`.
 
 ---
 
@@ -26,16 +28,62 @@
 
 ```mermaid
 graph TD
-    Client[Client / Healthcare Application] -->|1. Raw Data + Age Claim| Gateway[Go Gateway SDK]
-    Gateway -->|2. Generate & Verify zk-SNARK| ZKP[gnark ZKP Engine (Groth16/BN254)]
-    Gateway -->|3. Submit Verified Proof Hash| PeerH0[Hospital Org - Peer0 :7051]
-    Gateway -->|3. Submit Verified Proof Hash| PeerH1[Hospital Org - Peer1 :8051]
-    Gateway -->|3. Submit Verified Proof Hash| PeerI0[Insurer Org - Peer0 :9051]
-    Gateway -->|3. Submit Verified Proof Hash| PeerI1[Insurer Org - Peer1 :10051]
-    PeerH0 -->|4. AND Endorsement| Orderers[3-Node Raft Cluster :7050, :8050, :9050]
-    PeerI0 -->|4. AND Endorsement| Orderers
-    Orderers -->|5. Commit Block + Audit Log| Ledger[(Fabric Ledger State)]
+    Client[Client / Healthcare Application] --> Gateway[Go Gateway]
+    Gateway --> ZKP[gnark Groth16 / BN254]
+    Gateway -->|AES-256-GCM| IPFS[Local Kubo / IPFS]
+    IPFS -->|CID| Gateway
+    Gateway -->|metadata + dataHash + CID + proof hash| Fabric[Hyperledger Fabric]
+    Fabric --> Peers[Hospital + Insurer Peers]
+    Peers --> Raft[3-Node Raft Cluster]
+    Fabric -->|authorization + audit| Gateway
+    Gateway -->|authorized fetch + decrypt + hash verify| IPFS
 ```
+
+---
+
+## 🔐 Encrypted IPFS Off-Chain Storage
+
+IPFS is optional and is **not** the authorization layer. Fabric remains responsible for consent, MSP/role policy, and audit logging.
+
+Start the local Kubo node:
+
+```bash
+docker-compose -f docker-compose.ipfs.yml up -d
+```
+
+Configure the Gateway with a 32-byte AES-256 key kept outside Git:
+
+```bash
+export ZT_IPFS_ENABLED=true
+export ZT_IPFS_API_URL=http://127.0.0.1:5001/api/v0
+export ZT_IPFS_ENCRYPTION_KEY=$(openssl rand -hex 32)
+```
+
+For persistent development use, keep the same key in `.env.local`. `full_reset.sh` loads `.env.local`, reuses the existing key, and persists a newly generated key when one is not present. Changing the key makes previously encrypted IPFS objects undecryptable.
+
+Run the end-to-end integration test after Fabric deployment and identity enrollment:
+
+```bash
+cd gateway
+source ../.env.local
+go run ./cmd/test_ipfs
+```
+
+The test exercises:
+
+```text
+Gateway
+  → Groth16 proof generation + verification
+  → AES-256-GCM encryption
+  → IPFS upload + CID
+  → Fabric metadata transaction
+  → Fabric authorization/audit transaction
+  → IPFS fetch + decryption
+  → SHA-256 integrity verification
+  → JSON round-trip verification
+```
+
+See [`ipfs/README.md`](ipfs/README.md) for the detailed IPFS design and limitations.
 
 ---
 
@@ -47,31 +95,47 @@ ZeroTrustBlock includes two distinct benchmark suites:
    - Tests end-to-end Gateway ingestion, `gnark` ZKP generation, verification, and Fabric block commits.
    - **Simulation Mode**: Local development harness simulating high-concurrency loads.
    - **Real Mode (`cmd/real/main.go`)**: Direct high-concurrency execution against live Fabric peers.
-   
+
 2. **Hyperledger Caliper Suite (`caliper/`)**:
-   - Evaluates peer network saturation and transaction throughput under flood stress.
-   - **Target Rate**: 2,500 TPS
-   - **Verified Achieved Throughput**: ~1,000 TPS (with 100% transaction success rate)
+   - Evaluates peer network saturation and transaction throughput under controlled offered loads.
+   - Benchmark results are environment-specific and should be reported with the exact configuration and hardware used.
 
 ---
 
 ## 📋 Technical Stack & Versioning
 
-- **Fabric Engine**: Hyperledger Fabric `v2.4.9` LTS line (selected for container reproducibility and stability across test environments).
-- **Client SDK**: `github.com/hyperledger/fabric-sdk-go` `v1.0.0` with Go 1.22.2 compatibility.
-- **ZKP Backend**: `github.com/consensys/gnark` `v0.9.1` (Groth16 over BN254 pairing-friendly elliptic curve).
+- **Fabric Engine**: Hyperledger Fabric `v2.4.9` LTS line.
+- **Client SDK**: `github.com/hyperledger/fabric-sdk-go` `v1.0.0`.
+- **ZKP Backend**: `github.com/consensys/gnark` `v0.9.1` (Groth16 over BN254).
+- **IPFS**: Kubo `v0.43.0` via `ipfs/kubo:v0.43.0`.
+- **Encryption**: AES-256-GCM with a 32-byte key supplied through `ZT_IPFS_ENCRYPTION_KEY`.
 
 ---
 
 ## 🚀 Quick Start
 
-### Master Automated Reset & Run
-Executes full network cleanup, certificate generation, Raft network bootstrap, chaincode lifecycle deployment on all 4 peers, wallet population, and Caliper benchmarking:
+### Start the Fabric network
 
 ```bash
-chmod +x full_reset.sh network.sh deploy.sh caliper_test.sh
+chmod +x network.sh deploy.sh full_reset.sh
+./network.sh up
+./deploy.sh
+```
+
+Then provision Gateway identities:
+
+```bash
+cd gateway
+go run ./cmd/enroll
+```
+
+### Full reset + benchmark
+
+```bash
 ./full_reset.sh
 ```
+
+The full reset regenerates Fabric crypto material, rebuilds and deploys chaincode, provisions fresh Gateway identities, starts IPFS when enabled, and then runs the real benchmark. It does **not** delete the persistent IPFS Docker volume.
 
 ---
 
@@ -80,20 +144,19 @@ chmod +x full_reset.sh network.sh deploy.sh caliper_test.sh
 ```
 .
 ├── benchmark/               # Go stress test harness (Real & Simulation modes)
-├── caliper/                 # Hyperledger Caliper v0.7 benchmark suite
-├── chaincode/               # Smart contract (Go fabric-contract-api)
-│   └── main.go              # Fail-closed Zero Trust logic, cid.GetID(), role checks & GetTxTimestamp()
-├── configtx/                # Network topology & channel profiles (3 Raft consenters)
-├── crypto-config/           # Identity certificates configuration (3 orderer specs)
-├── gateway/                 # Client gateway SDK (Fabric SDK Go + ZKP integration)
-│   ├── connection-profile.yaml # Network connection profile (fixed peers/orderers structure)
-│   └── gateway.go           # High-level client API & ZKP pipeline (SubmitTransaction for reads)
-├── zkp/                     # Zero-Knowledge Proof circuits (gnark)
-│   └── health_circuits.go   # Groth16 age range & diagnosis circuits
-├── docker-compose.yml       # 3 Raft orderers & 4 peer containers
-├── deploy.sh                # Multi-org lifecycle chaincode installer
-├── full_reset.sh            # Automated end-to-end deployment script
-└── network.sh               # Cryptogen & configtxgen network bootstrapper
+├── caliper/                 # Hyperledger Caliper benchmark suite
+├── chaincode/               # Smart contract and Zero-Trust access logic
+├── configtx/                # Network topology & channel profiles
+├── crypto-config/           # Generated Fabric identity configuration
+├── experiments/             # Reproducible A–E experimental evaluation plan
+├── gateway/                 # Fabric Gateway SDK + ZKP + encrypted IPFS integration
+├── ipfs/                    # IPFS integration documentation
+├── zkp/                     # Groth16 ZKP circuits
+├── docker-compose.yml       # Fabric network
+├── docker-compose.ipfs.yml  # Optional local Kubo node
+├── deploy.sh                # Chaincode lifecycle deployment
+├── full_reset.sh            # Full reset + benchmark orchestrator
+└── network.sh               # Crypto/artifact/network bootstrapper
 ```
 
 ---
