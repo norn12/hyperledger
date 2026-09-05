@@ -59,11 +59,17 @@ cd "$PROJECT_DIR"
 
 echo -e "${GREEN}✓ appAdmin, doctor and insurer identities provisioned${NC}"
 
-# 5. Ensure the separately managed IPFS service is running.
+# 5. Ensure the separately managed IPFS service is running and configure
+#    encryption for all child processes in this reset.
 echo -e "${YELLOW}[5/6] Starting IPFS service...${NC}"
 docker-compose -f docker-compose.ipfs.yml up -d
+export ZT_IPFS_ENABLED=true
+export ZT_IPFS_API_URL="http://127.0.0.1:5001/api/v0"
+if [ -z "${ZT_IPFS_ENCRYPTION_KEY:-}" ]; then
+    export ZT_IPFS_ENCRYPTION_KEY="$(openssl rand -hex 32)"
+fi
 
-echo -e "${GREEN}✓ IPFS service is running${NC}"
+echo -e "${GREEN}✓ IPFS service is running and encryption is configured${NC}"
 
 # 6. Execution: Go Benchmark Flood
 echo -e "${YELLOW}[6/6] Launching High-Concurrency Go Benchmark...${NC}"
