@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include "../record.h"
 
 // Simple deterministic demo hash. NOT suitable for cryptography or a real ZKP.
 std::string hash_value(const std::string& value) {
@@ -32,12 +33,18 @@ bool treatment_is_covered(const std::string& treatment,
 }
 
 int main() {
-    const std::vector<std::string> covered = {"MRI", "dialysis", "chemotherapy", "appendectomy"};
+    const std::vector<std::string> covered = {"T001", "T005", "T010", "T015"};
     const std::string root = merkle_root(covered);
-    const std::string secret_treatment = "MRI";
+    const auto records = getTestRecords();
 
     std::cout << "Covered-treatment Merkle root (demo): " << root << '\n';
-    std::cout << "Hidden treatment membership: "
-              << (treatment_is_covered(secret_treatment, covered) ? "VALID" : "INVALID") << '\n';
+
+    for (const auto& record : records) {
+        const bool valid = treatment_is_covered(record.treatmentCode, covered);
+        std::cout << record.recordId
+                  << " | treatment=" << record.treatmentCode
+                  << " | membership: " << (valid ? "VALID" : "INVALID") << '\n';
+    }
+
     return 0;
 }
