@@ -1,47 +1,44 @@
 #include <iostream>
-#include <string>
-#include <functional>
+#include "../record.h"
 
-// Small helper representing a hidden claim attribute in the naive model.
-struct ClaimData {
-    int age;
-    std::string diagnosis;
-    std::string treatment;
-    long long amount;
+// Educational policy shared by all records in this demo.
+struct Policy {
+    int min_age;
+    int max_age;
+    long long max_claim_amount;
+    int waiting_days;
 };
 
-// A deliberately simple policy evaluator that composes the other properties.
-bool policy_validity(const ClaimData& claim,
-                     int min_age,
-                     int max_age,
-                     long long max_amount,
-                     const std::string& covered_diagnosis,
-                     const std::string& covered_treatment) {
-    // Check the age range rule.
-    const bool age_ok = claim.age >= min_age && claim.age <= max_age;
+// Check all policy rules against one shared claim record.
+bool policy_validity(const ClaimRecord& record, const Policy& policy) {
+    // Age rule.
+    const bool age_ok = record.age >= policy.min_age && record.age <= policy.max_age;
 
-    // Check the financial upper bound.
-    const bool amount_ok = claim.amount <= max_amount;
+    // Claim amount rule.
+    const bool amount_ok = record.claimAmount <= policy.max_claim_amount;
 
-    // Naively model membership using equality to one covered value.
-    const bool diagnosis_ok = claim.diagnosis == covered_diagnosis;
-    const bool treatment_ok = claim.treatment == covered_treatment;
+    // For this naive playground, waiting-period checking is delegated to the
+    // same date logic demonstrated in circuit 05. Here we keep the overall
+    // circuit simple and use the treatment date/policy start as raw record data.
+    // A real implementation would perform date arithmetic inside the circuit.
+    const bool dates_present = !record.policyStartDate.empty() && !record.treatmentDate.empty();
 
-    // The overall policy is valid only if every required condition passes.
-    return age_ok && amount_ok && diagnosis_ok && treatment_ok;
+    return age_ok && amount_ok && dates_present;
 }
 
 int main() {
-    ClaimData claim{34, "diabetes", "MRI", 180000};
+    // The policy is public; claim records come from the central test dataset.
+    const Policy policy{18, 65, 500000, 30};
+    const auto records = getTestRecords();
 
-    const bool valid = policy_validity(
-        claim,
-        18,
-        65,
-        500000,
-        "diabetes",
-        "MRI");
+    for (const auto& record : records) {
+        const bool valid = policy_validity(record, policy);
 
-    std::cout << "Overall policy validity: " << (valid ? "VALID" : "INVALID") << '\n';
+        std::cout << record.recordId
+                  << " | patient=" << record.patientId
+                  << " | policy validity: "
+                  << (valid ? "VALID" : "INVALID") << '\n';
+    }
+
     return 0;
 }
