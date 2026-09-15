@@ -1,10 +1,10 @@
 #include <iostream>
 #include <string>
 #include <functional>
-#include <sstream>
+#include "../record.h"
 
-// Educational binding function. It models the idea of a commitment to context.
-// std::hash is NOT cryptographically secure and must never be used for production ZKP binding.
+// Educational binding function. It models the idea of committing to context.
+// std::hash is NOT cryptographically secure and must never be used for production.
 std::string bind_context(const std::string& patient_commitment,
                          const std::string& policy_id,
                          const std::string& claim_id,
@@ -15,17 +15,23 @@ std::string bind_context(const std::string& patient_commitment,
 }
 
 int main() {
-    const std::string patient = "patient-commitment-demo";
-    const std::string policy = "P001";
-    const std::string claim = "C001";
-    const std::string nonce = "847291";
+    const auto records = getTestRecords();
 
-    const std::string binding = bind_context(patient, policy, claim, nonce);
+    for (const auto& record : records) {
+        const std::string binding = bind_context(record.patientCommitment,
+                                                  record.policyId,
+                                                  record.recordId,
+                                                  record.nonce);
 
-    std::cout << "Bound context: " << binding << '\n';
-    std::cout << "Same context reproduces binding: "
-              << (binding == bind_context(patient, policy, claim, nonce) ? "YES" : "NO") << '\n';
-    std::cout << "Changing claim changes binding: "
-              << (binding != bind_context(patient, policy, "C002", nonce) ? "YES" : "NO") << '\n';
+        std::cout << record.recordId
+                  << " | bound context: " << binding
+                  << " | same context reproduces binding: "
+                  << (binding == bind_context(record.patientCommitment,
+                                              record.policyId,
+                                              record.recordId,
+                                              record.nonce) ? "YES" : "NO")
+                  << '\n';
+    }
+
     return 0;
 }
