@@ -1,6 +1,7 @@
 #include <ctime>
 #include <iostream>
 #include <string>
+#include "../record.h"
 
 // Convert a YYYY-MM-DD date into a day count using the C++ standard library.
 // This is a teaching implementation, not a circuit-friendly date representation.
@@ -9,11 +10,11 @@ std::time_t parse_date(const std::string& date) {
     tm.tm_year = std::stoi(date.substr(0, 4)) - 1900;
     tm.tm_mon  = std::stoi(date.substr(5, 2)) - 1;
     tm.tm_mday = std::stoi(date.substr(8, 2));
-    tm.tm_hour = 12; // Reduce daylight-saving boundary surprises in local time.
+    tm.tm_hour = 12;
     return std::mktime(&tm);
 }
 
-// Naive statement: treatment date is at least waiting_days after policy start.
+// Treatment must occur at least waiting_days after policy start.
 bool waiting_period_satisfied(const std::string& policy_start,
                               const std::string& treatment_date,
                               int waiting_days) {
@@ -23,8 +24,17 @@ bool waiting_period_satisfied(const std::string& policy_start,
 }
 
 int main() {
-    std::cout << "Waiting-period rule: "
-              << (waiting_period_satisfied("2026-01-01", "2026-02-15", 30)
-                      ? "VALID" : "INVALID") << '\n';
+    const int policy_waiting_days = 30;
+    const auto records = getTestRecords();
+
+    for (const auto& record : records) {
+        const bool valid = waiting_period_satisfied(record.policyStartDate,
+                                                    record.treatmentDate,
+                                                    policy_waiting_days);
+        std::cout << record.recordId
+                  << " | " << record.policyStartDate << " -> " << record.treatmentDate
+                  << " | waiting period: " << (valid ? "VALID" : "INVALID") << '\n';
+    }
+
     return 0;
 }
