@@ -1,0 +1,10 @@
+Z12 local cryptographic/Gateway benchmark summary; 10 independent runs, 10 operations per run; 2026-10-04T19:08:28+05:30
+BenchmarkProofGeneration-16: N=10; mean=70701683 ns; median=70190656 ns; min=67286958 ns; max=76695102 ns; P95=76695102 ns; P99=not reported (N<100); sample_SD=2777364 ns
+BenchmarkProofVerification-16: N=10; mean=674528 ns; median=676276 ns; min=629682 ns; max=710676 ns; P95=710676 ns; P99=not reported (N<100); sample_SD=23458 ns
+BenchmarkGatewayLocalZKPProcessing-16: N=10; mean=77198012 ns; median=76406676 ns; min=75967003 ns; max=80527210 ns; P95=80527210 ns; P99=not reported (N<100); sample_SD=1593750 ns
+BenchmarkGatewayLocalZKPProcessing-16:gateway-total-ns/op: N=10; mean=77184189 ns; median=76394698 ns; min=75955789 ns; max=80501095 ns; P95=80501095 ns; P99=not reported (N<100); sample_SD=1589577 ns
+BenchmarkGatewayLocalZKPProcessing-16:local-verify-ns/op: N=10; mean=986646 ns; median=980356 ns; min=899879 ns; max=1095898 ns; P95=1095898 ns; P99=not reported (N<100); sample_SD=66019 ns
+BenchmarkGatewayLocalZKPProcessing-16:prove-ns/op: N=10; mean=75711851 ns; median=75000541 ns; min=74523427 ns; max=78957788 ns; P95=78957788 ns; P99=not reported (N<100); sample_SD=1547677 ns
+BenchmarkGatewayLocalZKPProcessing-16:witness-ns/op: N=10; mean=2588 ns; median=2178 ns; min=1063 ns; max=5647 ns; P95=5647 ns; P99=not reported (N<100); sample_SD=1648 ns
+P95 is nearest-rank and equals the maximum for N=10. P99 is not reported because N<100.
+No Fabric values are derived by subtraction here; no live Fabric sample was available.

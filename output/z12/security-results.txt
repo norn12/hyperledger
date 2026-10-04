@@ -1,0 +1,360 @@
+Z12 deterministic/local security validation: 2026-10-04T19:18:34+05:30
+===== hardened-tests =====
+=== RUN   TestHardenedRelationAndCoreAdversarialWitnesses
+    circuit_test.go:156: HealthClaimHardened: constraints=22021 public_variables=13 secret_variables=31
+    circuit_test.go:157: vector root=15460775045360793867654242824691784055760339833977029268293985288506263810664 root_version=5 policy=18353728845947777703138221325623190971591480255476078313118225887487698918477 policy_version=3 claim=900 key=(14070452813104092816843037928594521276438349285092213189651688290527828028146,6237266299427648898478326541571544039022962170913244090356251217859629927350) nullifier=1545258525173338893172070106969423230702423291004155123897663076024887916306 domain=202610041 challenge=777 recipient=12 deployment=9 context=2844409997188616708234201216815578908234670238316098002012575242092484996551
+=== RUN   TestHardenedRelationAndCoreAdversarialWitnesses/claim_exceeds_64_bits
+=== RUN   TestHardenedRelationAndCoreAdversarialWitnesses/wrong_Merkle_root
+=== RUN   TestHardenedRelationAndCoreAdversarialWitnesses/wrong_nullifier
+=== RUN   TestHardenedRelationAndCoreAdversarialWitnesses/wrong_recipient
+=== RUN   TestHardenedRelationAndCoreAdversarialWitnesses/wrong_policy_version
+=== RUN   TestHardenedRelationAndCoreAdversarialWitnesses/root_version_exceeds_64_bits
+=== RUN   TestHardenedRelationAndCoreAdversarialWitnesses/policy_version_exceeds_64_bits
+=== RUN   TestHardenedRelationAndCoreAdversarialWitnesses/wrong_context_digest
+=== RUN   TestHardenedRelationAndCoreAdversarialWitnesses/lab_above_maximum
+=== RUN   TestHardenedRelationAndCoreAdversarialWitnesses/invalid_authority_signature
+=== RUN   TestHardenedRelationAndCoreAdversarialWitnesses/wrong_registry_root_path
+=== RUN   TestHardenedRelationAndCoreAdversarialWitnesses/wrong_challenge
+=== RUN   TestHardenedRelationAndCoreAdversarialWitnesses/wrong_domain
+=== RUN   TestHardenedRelationAndCoreAdversarialWitnesses/diagnosis_not_covered
+=== RUN   TestHardenedRelationAndCoreAdversarialWitnesses/lab_below_minimum
+=== RUN   TestHardenedRelationAndCoreAdversarialWitnesses/claim_above_coverage_ceiling
+=== RUN   TestHardenedRelationAndCoreAdversarialWitnesses/coverage_ceiling_exceeds_64_bits
+=== RUN   TestHardenedRelationAndCoreAdversarialWitnesses/wrong_authority_public_key
+=== RUN   TestHardenedRelationAndCoreAdversarialWitnesses/wrong_policy_commitment
+=== RUN   TestHardenedRelationAndCoreAdversarialWitnesses/wrong_deployment_context
+=== RUN   TestHardenedRelationAndCoreAdversarialWitnesses/wrong_root_version
+=== RUN   TestHardenedRelationAndCoreAdversarialWitnesses/lab_exceeds_64_bits
+=== RUN   TestHardenedRelationAndCoreAdversarialWitnesses/coverage_ceiling_exceeds_policy_maximum
+=== RUN   TestHardenedRelationAndCoreAdversarialWitnesses/non-Boolean_Merkle_direction
+--- PASS: TestHardenedRelationAndCoreAdversarialWitnesses (0.16s)
+    --- PASS: TestHardenedRelationAndCoreAdversarialWitnesses/claim_exceeds_64_bits (0.00s)
+    --- PASS: TestHardenedRelationAndCoreAdversarialWitnesses/wrong_Merkle_root (0.00s)
+    --- PASS: TestHardenedRelationAndCoreAdversarialWitnesses/wrong_nullifier (0.00s)
+    --- PASS: TestHardenedRelationAndCoreAdversarialWitnesses/wrong_recipient (0.00s)
+    --- PASS: TestHardenedRelationAndCoreAdversarialWitnesses/wrong_policy_version (0.00s)
+    --- PASS: TestHardenedRelationAndCoreAdversarialWitnesses/root_version_exceeds_64_bits (0.00s)
+    --- PASS: TestHardenedRelationAndCoreAdversarialWitnesses/policy_version_exceeds_64_bits (0.00s)
+    --- PASS: TestHardenedRelationAndCoreAdversarialWitnesses/wrong_context_digest (0.00s)
+    --- PASS: TestHardenedRelationAndCoreAdversarialWitnesses/lab_above_maximum (0.01s)
+    --- PASS: TestHardenedRelationAndCoreAdversarialWitnesses/invalid_authority_signature (0.01s)
+    --- PASS: TestHardenedRelationAndCoreAdversarialWitnesses/wrong_registry_root_path (0.01s)
+    --- PASS: TestHardenedRelationAndCoreAdversarialWitnesses/wrong_challenge (0.00s)
+    --- PASS: TestHardenedRelationAndCoreAdversarialWitnesses/wrong_domain (0.00s)
+    --- PASS: TestHardenedRelationAndCoreAdversarialWitnesses/diagnosis_not_covered (0.01s)
+    --- PASS: TestHardenedRelationAndCoreAdversarialWitnesses/lab_below_minimum (0.01s)
+    --- PASS: TestHardenedRelationAndCoreAdversarialWitnesses/claim_above_coverage_ceiling (0.00s)
+    --- PASS: TestHardenedRelationAndCoreAdversarialWitnesses/coverage_ceiling_exceeds_64_bits (0.00s)
+    --- PASS: TestHardenedRelationAndCoreAdversarialWitnesses/wrong_authority_public_key (0.00s)
+    --- PASS: TestHardenedRelationAndCoreAdversarialWitnesses/wrong_policy_commitment (0.00s)
+    --- PASS: TestHardenedRelationAndCoreAdversarialWitnesses/wrong_deployment_context (0.00s)
+    --- PASS: TestHardenedRelationAndCoreAdversarialWitnesses/wrong_root_version (0.00s)
+    --- PASS: TestHardenedRelationAndCoreAdversarialWitnesses/lab_exceeds_64_bits (0.00s)
+    --- PASS: TestHardenedRelationAndCoreAdversarialWitnesses/coverage_ceiling_exceeds_policy_maximum (0.01s)
+    --- PASS: TestHardenedRelationAndCoreAdversarialWitnesses/non-Boolean_Merkle_direction (0.01s)
+=== RUN   TestPrivateWitnessMutationMatrix
+=== RUN   TestPrivateWitnessMutationMatrix/Merkle_sibling_1
+=== RUN   TestPrivateWitnessMutationMatrix/Merkle_direction_/_derived_index_3
+=== RUN   TestPrivateWitnessMutationMatrix/patient_secret
+=== RUN   TestPrivateWitnessMutationMatrix/Merkle_sibling_2
+=== RUN   TestPrivateWitnessMutationMatrix/Merkle_sibling_4
+=== RUN   TestPrivateWitnessMutationMatrix/Merkle_sibling_7
+=== RUN   TestPrivateWitnessMutationMatrix/policy_ID
+=== RUN   TestPrivateWitnessMutationMatrix/policy_max_claim
+=== RUN   TestPrivateWitnessMutationMatrix/Merkle_sibling_6
+=== RUN   TestPrivateWitnessMutationMatrix/diagnosis
+=== RUN   TestPrivateWitnessMutationMatrix/covered_diagnosis_0
+=== RUN   TestPrivateWitnessMutationMatrix/Merkle_sibling_3
+=== RUN   TestPrivateWitnessMutationMatrix/Merkle_sibling_5
+=== RUN   TestPrivateWitnessMutationMatrix/covered_diagnosis_1
+=== RUN   TestPrivateWitnessMutationMatrix/signature_R.X
+=== RUN   TestPrivateWitnessMutationMatrix/Merkle_sibling_0
+=== RUN   TestPrivateWitnessMutationMatrix/Merkle_direction_/_derived_index_2
+=== RUN   TestPrivateWitnessMutationMatrix/lab_value
+=== RUN   TestPrivateWitnessMutationMatrix/lab_minimum
+=== RUN   TestPrivateWitnessMutationMatrix/Merkle_direction_/_derived_index_0
+=== RUN   TestPrivateWitnessMutationMatrix/Merkle_direction_/_derived_index_5
+=== RUN   TestPrivateWitnessMutationMatrix/lab_maximum
+=== RUN   TestPrivateWitnessMutationMatrix/signature_S
+=== RUN   TestPrivateWitnessMutationMatrix/Merkle_direction_/_derived_index_1
+=== RUN   TestPrivateWitnessMutationMatrix/Merkle_direction_/_derived_index_4
+=== RUN   TestPrivateWitnessMutationMatrix/Merkle_direction_/_derived_index_6
+=== RUN   TestPrivateWitnessMutationMatrix/Merkle_direction_/_derived_index_7
+=== RUN   TestPrivateWitnessMutationMatrix/coverage_ceiling
+=== RUN   TestPrivateWitnessMutationMatrix/covered_diagnosis_2
+=== RUN   TestPrivateWitnessMutationMatrix/covered_diagnosis_3
+=== RUN   TestPrivateWitnessMutationMatrix/signature_R.Y
+--- PASS: TestPrivateWitnessMutationMatrix (0.19s)
+    --- PASS: TestPrivateWitnessMutationMatrix/Merkle_sibling_1 (0.01s)
+    --- PASS: TestPrivateWitnessMutationMatrix/Merkle_direction_/_derived_index_3 (0.01s)
+    --- PASS: TestPrivateWitnessMutationMatrix/patient_secret (0.01s)
+    --- PASS: TestPrivateWitnessMutationMatrix/Merkle_sibling_2 (0.01s)
+    --- PASS: TestPrivateWitnessMutationMatrix/Merkle_sibling_4 (0.01s)
+    --- PASS: TestPrivateWitnessMutationMatrix/Merkle_sibling_7 (0.01s)
+    --- PASS: TestPrivateWitnessMutationMatrix/policy_ID (0.00s)
+    --- PASS: TestPrivateWitnessMutationMatrix/policy_max_claim (0.00s)
+    --- PASS: TestPrivateWitnessMutationMatrix/Merkle_sibling_6 (0.01s)
+    --- PASS: TestPrivateWitnessMutationMatrix/diagnosis (0.01s)
+    --- PASS: TestPrivateWitnessMutationMatrix/covered_diagnosis_0 (0.00s)
+    --- PASS: TestPrivateWitnessMutationMatrix/Merkle_sibling_3 (0.01s)
+    --- PASS: TestPrivateWitnessMutationMatrix/Merkle_sibling_5 (0.01s)
+    --- PASS: TestPrivateWitnessMutationMatrix/covered_diagnosis_1 (0.00s)
+    --- PASS: TestPrivateWitnessMutationMatrix/signature_R.X (0.00s)
+    --- PASS: TestPrivateWitnessMutationMatrix/Merkle_sibling_0 (0.01s)
+    --- PASS: TestPrivateWitnessMutationMatrix/Merkle_direction_/_derived_index_2 (0.01s)
+    --- PASS: TestPrivateWitnessMutationMatrix/lab_value (0.01s)
+    --- PASS: TestPrivateWitnessMutationMatrix/lab_minimum (0.00s)
+    --- PASS: TestPrivateWitnessMutationMatrix/Merkle_direction_/_derived_index_0 (0.01s)
+    --- PASS: TestPrivateWitnessMutationMatrix/Merkle_direction_/_derived_index_5 (0.01s)
+    --- PASS: TestPrivateWitnessMutationMatrix/lab_maximum (0.00s)
+    --- PASS: TestPrivateWitnessMutationMatrix/signature_S (0.01s)
+    --- PASS: TestPrivateWitnessMutationMatrix/Merkle_direction_/_derived_index_1 (0.01s)
+    --- PASS: TestPrivateWitnessMutationMatrix/Merkle_direction_/_derived_index_4 (0.01s)
+    --- PASS: TestPrivateWitnessMutationMatrix/Merkle_direction_/_derived_index_6 (0.01s)
+    --- PASS: TestPrivateWitnessMutationMatrix/Merkle_direction_/_derived_index_7 (0.01s)
+    --- PASS: TestPrivateWitnessMutationMatrix/coverage_ceiling (0.01s)
+    --- PASS: TestPrivateWitnessMutationMatrix/covered_diagnosis_2 (0.00s)
+    --- PASS: TestPrivateWitnessMutationMatrix/covered_diagnosis_3 (0.00s)
+    --- PASS: TestPrivateWitnessMutationMatrix/signature_R.Y (0.00s)
+=== RUN   TestRecordNullifierStableAcrossRequestContext
+--- PASS: TestRecordNullifierStableAcrossRequestContext (0.02s)
+=== RUN   TestValidNumericAndPolicyBoundaries
+=== RUN   TestValidNumericAndPolicyBoundaries/lab_equals_minimum
+=== RUN   TestValidNumericAndPolicyBoundaries/lab_equals_maximum
+=== RUN   TestValidNumericAndPolicyBoundaries/claim_equals_coverage_ceiling
+=== RUN   TestValidNumericAndPolicyBoundaries/coverage_equals_policy_maximum
+=== RUN   TestValidNumericAndPolicyBoundaries/diagnosis_matches_covered_entry_0
+=== RUN   TestValidNumericAndPolicyBoundaries/diagnosis_matches_covered_entry_1
+=== RUN   TestValidNumericAndPolicyBoundaries/diagnosis_matches_covered_entry_2
+=== RUN   TestValidNumericAndPolicyBoundaries/diagnosis_matches_covered_entry_3
+=== RUN   TestValidNumericAndPolicyBoundaries/smallest_valid_64-bit_values_including_zero
+=== RUN   TestValidNumericAndPolicyBoundaries/largest_valid_64-bit_values
+--- PASS: TestValidNumericAndPolicyBoundaries (0.10s)
+    --- PASS: TestValidNumericAndPolicyBoundaries/lab_equals_minimum (0.01s)
+    --- PASS: TestValidNumericAndPolicyBoundaries/lab_equals_maximum (0.01s)
+    --- PASS: TestValidNumericAndPolicyBoundaries/claim_equals_coverage_ceiling (0.01s)
+    --- PASS: TestValidNumericAndPolicyBoundaries/coverage_equals_policy_maximum (0.01s)
+    --- PASS: TestValidNumericAndPolicyBoundaries/diagnosis_matches_covered_entry_0 (0.01s)
+    --- PASS: TestValidNumericAndPolicyBoundaries/diagnosis_matches_covered_entry_1 (0.01s)
+    --- PASS: TestValidNumericAndPolicyBoundaries/diagnosis_matches_covered_entry_2 (0.01s)
+    --- PASS: TestValidNumericAndPolicyBoundaries/diagnosis_matches_covered_entry_3 (0.01s)
+    --- PASS: TestValidNumericAndPolicyBoundaries/smallest_valid_64-bit_values_including_zero (0.01s)
+    --- PASS: TestValidNumericAndPolicyBoundaries/largest_valid_64-bit_values (0.01s)
+=== RUN   TestNegativeAndOverflowRangeInputsRejected
+=== RUN   TestNegativeAndOverflowRangeInputsRejected/negative_lab_maximum
+=== RUN   TestNegativeAndOverflowRangeInputsRejected/negative_policy_maximum
+=== RUN   TestNegativeAndOverflowRangeInputsRejected/negative_covered_diagnosis
+=== RUN   TestNegativeAndOverflowRangeInputsRejected/negative_policy_version
+=== RUN   TestNegativeAndOverflowRangeInputsRejected/lab_maximum_exceeds_64_bits
+=== RUN   TestNegativeAndOverflowRangeInputsRejected/negative_policy_ID
+=== RUN   TestNegativeAndOverflowRangeInputsRejected/negative_claim
+=== RUN   TestNegativeAndOverflowRangeInputsRejected/negative_lab_minimum
+=== RUN   TestNegativeAndOverflowRangeInputsRejected/diagnosis_exceeds_64_bits
+=== RUN   TestNegativeAndOverflowRangeInputsRejected/policy_ID_exceeds_64_bits
+=== RUN   TestNegativeAndOverflowRangeInputsRejected/lab_minimum_exceeds_64_bits
+=== RUN   TestNegativeAndOverflowRangeInputsRejected/covered_diagnosis_exceeds_64_bits
+=== RUN   TestNegativeAndOverflowRangeInputsRejected/negative_lab_value
+=== RUN   TestNegativeAndOverflowRangeInputsRejected/negative_coverage_ceiling
+=== RUN   TestNegativeAndOverflowRangeInputsRejected/negative_diagnosis
+=== RUN   TestNegativeAndOverflowRangeInputsRejected/negative_root_version
+=== RUN   TestNegativeAndOverflowRangeInputsRejected/policy_maximum_exceeds_64_bits
+--- PASS: TestNegativeAndOverflowRangeInputsRejected (0.00s)
+    --- PASS: TestNegativeAndOverflowRangeInputsRejected/negative_lab_maximum (0.00s)
+    --- PASS: TestNegativeAndOverflowRangeInputsRejected/negative_policy_maximum (0.00s)
+    --- PASS: TestNegativeAndOverflowRangeInputsRejected/negative_covered_diagnosis (0.00s)
+    --- PASS: TestNegativeAndOverflowRangeInputsRejected/negative_policy_version (0.00s)
+    --- PASS: TestNegativeAndOverflowRangeInputsRejected/lab_maximum_exceeds_64_bits (0.00s)
+    --- PASS: TestNegativeAndOverflowRangeInputsRejected/negative_policy_ID (0.00s)
+    --- PASS: TestNegativeAndOverflowRangeInputsRejected/negative_claim (0.00s)
+    --- PASS: TestNegativeAndOverflowRangeInputsRejected/negative_lab_minimum (0.00s)
+    --- PASS: TestNegativeAndOverflowRangeInputsRejected/diagnosis_exceeds_64_bits (0.00s)
+    --- PASS: TestNegativeAndOverflowRangeInputsRejected/policy_ID_exceeds_64_bits (0.00s)
+    --- PASS: TestNegativeAndOverflowRangeInputsRejected/lab_minimum_exceeds_64_bits (0.00s)
+    --- PASS: TestNegativeAndOverflowRangeInputsRejected/covered_diagnosis_exceeds_64_bits (0.00s)
+    --- PASS: TestNegativeAndOverflowRangeInputsRejected/negative_lab_value (0.00s)
+    --- PASS: TestNegativeAndOverflowRangeInputsRejected/negative_coverage_ceiling (0.00s)
+    --- PASS: TestNegativeAndOverflowRangeInputsRejected/negative_diagnosis (0.00s)
+    --- PASS: TestNegativeAndOverflowRangeInputsRejected/negative_root_version (0.00s)
+    --- PASS: TestNegativeAndOverflowRangeInputsRejected/policy_maximum_exceeds_64_bits (0.00s)
+=== RUN   TestGroth16ProofBindsEveryPublicInput
+    circuit_test.go:373: serialized Groth16 proof bytes=164
+=== RUN   TestGroth16ProofBindsEveryPublicInput/recipient
+=== RUN   TestGroth16ProofBindsEveryPublicInput/context_commitment
+=== RUN   TestGroth16ProofBindsEveryPublicInput/policy_commitment
+=== RUN   TestGroth16ProofBindsEveryPublicInput/claim_amount
+=== RUN   TestGroth16ProofBindsEveryPublicInput/authority_key_x
+=== RUN   TestGroth16ProofBindsEveryPublicInput/authority_key_y
+=== RUN   TestGroth16ProofBindsEveryPublicInput/challenge
+=== RUN   TestGroth16ProofBindsEveryPublicInput/deployment
+=== RUN   TestGroth16ProofBindsEveryPublicInput/registry_root
+=== RUN   TestGroth16ProofBindsEveryPublicInput/root_version
+=== RUN   TestGroth16ProofBindsEveryPublicInput/policy_version
+=== RUN   TestGroth16ProofBindsEveryPublicInput/nullifier
+=== RUN   TestGroth16ProofBindsEveryPublicInput/protocol_domain
+--- PASS: TestGroth16ProofBindsEveryPublicInput (0.80s)
+    --- PASS: TestGroth16ProofBindsEveryPublicInput/recipient (0.00s)
+    --- PASS: TestGroth16ProofBindsEveryPublicInput/context_commitment (0.00s)
+    --- PASS: TestGroth16ProofBindsEveryPublicInput/policy_commitment (0.00s)
+    --- PASS: TestGroth16ProofBindsEveryPublicInput/claim_amount (0.00s)
+    --- PASS: TestGroth16ProofBindsEveryPublicInput/authority_key_x (0.00s)
+    --- PASS: TestGroth16ProofBindsEveryPublicInput/authority_key_y (0.00s)
+    --- PASS: TestGroth16ProofBindsEveryPublicInput/challenge (0.00s)
+    --- PASS: TestGroth16ProofBindsEveryPublicInput/deployment (0.00s)
+    --- PASS: TestGroth16ProofBindsEveryPublicInput/registry_root (0.00s)
+    --- PASS: TestGroth16ProofBindsEveryPublicInput/root_version (0.00s)
+    --- PASS: TestGroth16ProofBindsEveryPublicInput/policy_version (0.00s)
+    --- PASS: TestGroth16ProofBindsEveryPublicInput/nullifier (0.00s)
+    --- PASS: TestGroth16ProofBindsEveryPublicInput/protocol_domain (0.00s)
+=== RUN   TestSelfSelectedAuthorityKeyRequiresVerifierAnchor
+--- PASS: TestSelfSelectedAuthorityKeyRequiresVerifierAnchor (0.01s)
+=== RUN   TestIdentityAndTorsionAuthorityKeysAreVerifierRejected
+=== RUN   TestIdentityAndTorsionAuthorityKeysAreVerifierRejected/identity
+=== RUN   TestIdentityAndTorsionAuthorityKeysAreVerifierRejected/order-2_torsion_point
+--- PASS: TestIdentityAndTorsionAuthorityKeysAreVerifierRejected (0.83s)
+    --- PASS: TestIdentityAndTorsionAuthorityKeysAreVerifierRejected/identity (0.06s)
+    --- PASS: TestIdentityAndTorsionAuthorityKeysAreVerifierRejected/order-2_torsion_point (0.06s)
+=== RUN   TestContextDigestCanonicalValidation
+--- PASS: TestContextDigestCanonicalValidation (0.00s)
+=== RUN   TestDeterministicHardenedV1Vectors
+--- PASS: TestDeterministicHardenedV1Vectors (0.00s)
+=== RUN   TestPublicInputCount
+--- PASS: TestPublicInputCount (0.06s)
+PASS
+ok  	zerotrust/healthclaimhardened	2.187s
+===== gateway-tests =====
+=== RUN   TestFailedLocalVerificationDoesNotCallFabricTransport
+--- PASS: TestFailedLocalVerificationDoesNotCallFabricTransport (0.75s)
+=== RUN   TestHealthClaimGatewayValidProofAndPrivateSerialization
+--- PASS: TestHealthClaimGatewayValidProofAndPrivateSerialization (0.78s)
+=== RUN   TestGatewayRejectsEveryMutatedPublicInput
+=== RUN   TestGatewayRejectsEveryMutatedPublicInput/RegistryRoot
+=== RUN   TestGatewayRejectsEveryMutatedPublicInput/ClaimAmount
+=== RUN   TestGatewayRejectsEveryMutatedPublicInput/Nullifier
+=== RUN   TestGatewayRejectsEveryMutatedPublicInput/Challenge
+=== RUN   TestGatewayRejectsEveryMutatedPublicInput/RecipientID
+=== RUN   TestGatewayRejectsEveryMutatedPublicInput/RootVersion
+=== RUN   TestGatewayRejectsEveryMutatedPublicInput/PolicyCommitment
+=== RUN   TestGatewayRejectsEveryMutatedPublicInput/PolicyVersion
+=== RUN   TestGatewayRejectsEveryMutatedPublicInput/AuthorityKeyX
+=== RUN   TestGatewayRejectsEveryMutatedPublicInput/AuthorityKeyY
+=== RUN   TestGatewayRejectsEveryMutatedPublicInput/ProtocolDomain
+=== RUN   TestGatewayRejectsEveryMutatedPublicInput/DeploymentID
+=== RUN   TestGatewayRejectsEveryMutatedPublicInput/ContextCommitment
+--- PASS: TestGatewayRejectsEveryMutatedPublicInput (0.81s)
+    --- PASS: TestGatewayRejectsEveryMutatedPublicInput/RegistryRoot (0.00s)
+    --- PASS: TestGatewayRejectsEveryMutatedPublicInput/ClaimAmount (0.00s)
+    --- PASS: TestGatewayRejectsEveryMutatedPublicInput/Nullifier (0.00s)
+    --- PASS: TestGatewayRejectsEveryMutatedPublicInput/Challenge (0.00s)
+    --- PASS: TestGatewayRejectsEveryMutatedPublicInput/RecipientID (0.00s)
+    --- PASS: TestGatewayRejectsEveryMutatedPublicInput/RootVersion (0.00s)
+    --- PASS: TestGatewayRejectsEveryMutatedPublicInput/PolicyCommitment (0.00s)
+    --- PASS: TestGatewayRejectsEveryMutatedPublicInput/PolicyVersion (0.00s)
+    --- PASS: TestGatewayRejectsEveryMutatedPublicInput/AuthorityKeyX (0.00s)
+    --- PASS: TestGatewayRejectsEveryMutatedPublicInput/AuthorityKeyY (0.00s)
+    --- PASS: TestGatewayRejectsEveryMutatedPublicInput/ProtocolDomain (0.00s)
+    --- PASS: TestGatewayRejectsEveryMutatedPublicInput/DeploymentID (0.00s)
+    --- PASS: TestGatewayRejectsEveryMutatedPublicInput/ContextCommitment (0.00s)
+=== RUN   TestGatewayRejectsUsedNullifier
+--- PASS: TestGatewayRejectsUsedNullifier (0.76s)
+=== RUN   TestGatewayRejectsInvalidClaimAndTrustedCommitmentMismatch
+=== RUN   TestGatewayRejectsInvalidClaimAndTrustedCommitmentMismatch/claim_exceeds_ceiling
+=== RUN   TestGatewayRejectsInvalidClaimAndTrustedCommitmentMismatch/private_policy_does_not_match_anchor
+=== RUN   TestGatewayRejectsInvalidClaimAndTrustedCommitmentMismatch/known_root_value_mismatch
+--- PASS: TestGatewayRejectsInvalidClaimAndTrustedCommitmentMismatch (0.73s)
+    --- PASS: TestGatewayRejectsInvalidClaimAndTrustedCommitmentMismatch/claim_exceeds_ceiling (0.00s)
+    --- PASS: TestGatewayRejectsInvalidClaimAndTrustedCommitmentMismatch/private_policy_does_not_match_anchor (0.00s)
+    --- PASS: TestGatewayRejectsInvalidClaimAndTrustedCommitmentMismatch/known_root_value_mismatch (0.00s)
+=== RUN   TestHealthClaimGatewayAdversarialPreflightAndFailClosed
+=== RUN   TestHealthClaimGatewayAdversarialPreflightAndFailClosed/missing_witness
+=== RUN   TestHealthClaimGatewayAdversarialPreflightAndFailClosed/unregistered_authority
+=== RUN   TestHealthClaimGatewayAdversarialPreflightAndFailClosed/untrusted_root
+=== RUN   TestHealthClaimGatewayAdversarialPreflightAndFailClosed/untrusted_policy
+=== RUN   TestHealthClaimGatewayAdversarialPreflightAndFailClosed/invalid_claim_amount
+=== RUN   TestHealthClaimGatewayAdversarialPreflightAndFailClosed/invalid_signature
+=== RUN   TestHealthClaimGatewayAdversarialPreflightAndFailClosed/invalid_Merkle_witness
+=== RUN   TestHealthClaimGatewayAdversarialPreflightAndFailClosed/wrong_challenge
+=== RUN   TestHealthClaimGatewayAdversarialPreflightAndFailClosed/wrong_recipient
+=== RUN   TestHealthClaimGatewayAdversarialPreflightAndFailClosed/wrong_deployment
+=== RUN   TestHealthClaimGatewayAdversarialPreflightAndFailClosed/local_verification_failure_stops_result
+=== RUN   TestHealthClaimGatewayAdversarialPreflightAndFailClosed/registered_but_wrong_authority_key
+--- PASS: TestHealthClaimGatewayAdversarialPreflightAndFailClosed (1.55s)
+    --- PASS: TestHealthClaimGatewayAdversarialPreflightAndFailClosed/missing_witness (0.00s)
+    --- PASS: TestHealthClaimGatewayAdversarialPreflightAndFailClosed/unregistered_authority (0.00s)
+    --- PASS: TestHealthClaimGatewayAdversarialPreflightAndFailClosed/untrusted_root (0.00s)
+    --- PASS: TestHealthClaimGatewayAdversarialPreflightAndFailClosed/untrusted_policy (0.00s)
+    --- PASS: TestHealthClaimGatewayAdversarialPreflightAndFailClosed/invalid_claim_amount (0.00s)
+    --- PASS: TestHealthClaimGatewayAdversarialPreflightAndFailClosed/invalid_signature (0.00s)
+    --- PASS: TestHealthClaimGatewayAdversarialPreflightAndFailClosed/invalid_Merkle_witness (0.00s)
+    --- PASS: TestHealthClaimGatewayAdversarialPreflightAndFailClosed/wrong_challenge (0.00s)
+    --- PASS: TestHealthClaimGatewayAdversarialPreflightAndFailClosed/wrong_recipient (0.00s)
+    --- PASS: TestHealthClaimGatewayAdversarialPreflightAndFailClosed/wrong_deployment (0.00s)
+    --- PASS: TestHealthClaimGatewayAdversarialPreflightAndFailClosed/local_verification_failure_stops_result (0.76s)
+    --- PASS: TestHealthClaimGatewayAdversarialPreflightAndFailClosed/registered_but_wrong_authority_key (0.01s)
+=== RUN   TestIPFSClientEncryptDecrypt
+--- PASS: TestIPFSClientEncryptDecrypt (0.00s)
+=== RUN   TestIPFSClientRejectsTamperedPayload
+--- PASS: TestIPFSClientRejectsTamperedPayload (0.00s)
+PASS
+ok  	zerotrust/gateway	5.410s
+?   	zerotrust/gateway/cmd/enroll	[no test files]
+?   	zerotrust/gateway/cmd/populate	[no test files]
+?   	zerotrust/gateway/cmd/security	[no test files]
+?   	zerotrust/gateway/cmd/test_ipfs	[no test files]
+===== chaincode-tests =====
+=== RUN   TestSubmitHealthClaimProofStoresPublicClaimAndAuditOnly
+--- PASS: TestSubmitHealthClaimProofStoresPublicClaimAndAuditOnly (0.00s)
+=== RUN   TestClaimNullifierAndChallengeReplayAreAtomic
+--- PASS: TestClaimNullifierAndChallengeReplayAreAtomic (0.00s)
+=== RUN   TestConsumedChallengeCannotAcceptAnotherClaim
+--- PASS: TestConsumedChallengeCannotAcceptAnotherClaim (0.00s)
+=== RUN   TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity
+=== RUN   TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/claim_ID
+=== RUN   TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/proof_hash
+=== RUN   TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/proof_length
+=== RUN   TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/root_version
+=== RUN   TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/root_value
+=== RUN   TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/policy_version
+=== RUN   TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/policy_commitment
+=== RUN   TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/authority
+=== RUN   TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/authority_key
+=== RUN   TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/wrong_challenge_recipient
+=== RUN   TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/wrong_deployment
+=== RUN   TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/malformed_field
+=== RUN   TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/unauthorized_MSP
+=== RUN   TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/unauthorized_insurer_role
+--- PASS: TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity (0.03s)
+    --- PASS: TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/claim_ID (0.00s)
+    --- PASS: TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/proof_hash (0.00s)
+    --- PASS: TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/proof_length (0.00s)
+    --- PASS: TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/root_version (0.00s)
+    --- PASS: TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/root_value (0.00s)
+    --- PASS: TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/policy_version (0.00s)
+    --- PASS: TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/policy_commitment (0.00s)
+    --- PASS: TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/authority (0.00s)
+    --- PASS: TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/authority_key (0.00s)
+    --- PASS: TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/wrong_challenge_recipient (0.00s)
+    --- PASS: TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/wrong_deployment (0.00s)
+    --- PASS: TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/malformed_field (0.00s)
+    --- PASS: TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/unauthorized_MSP (0.00s)
+    --- PASS: TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/unauthorized_insurer_role (0.00s)
+=== RUN   TestRegistryAndAccessLogAuthorization
+--- PASS: TestRegistryAndAccessLogAuthorization (0.00s)
+=== RUN   TestTrustedAuthorityRegistrationRejectsInvalidEdwardsKeys
+=== RUN   TestTrustedAuthorityRegistrationRejectsInvalidEdwardsKeys/off-curve
+=== RUN   TestTrustedAuthorityRegistrationRejectsInvalidEdwardsKeys/identity
+=== RUN   TestTrustedAuthorityRegistrationRejectsInvalidEdwardsKeys/order-2_torsion
+--- PASS: TestTrustedAuthorityRegistrationRejectsInvalidEdwardsKeys (0.00s)
+    --- PASS: TestTrustedAuthorityRegistrationRejectsInvalidEdwardsKeys/off-curve (0.00s)
+    --- PASS: TestTrustedAuthorityRegistrationRejectsInvalidEdwardsKeys/identity (0.00s)
+    --- PASS: TestTrustedAuthorityRegistrationRejectsInvalidEdwardsKeys/order-2_torsion (0.00s)
+=== RUN   TestZ12StorageSerializationSizesAndPrivacy
+    zkp_claims_test.go:381: proof_bytes=164 proof_hash_hex_chars=64 public_statement_json_bytes=425 claim_record_json_bytes=1050 audit_record_json_bytes=301
+--- PASS: TestZ12StorageSerializationSizesAndPrivacy (0.00s)
+PASS
+ok  	zero-trust-health	0.059s
+===== live-test-compile =====
+ok  	zerotrust/gateway	(cached) [no tests to run]
+?   	zerotrust/gateway/cmd/enroll	[no test files]
+?   	zerotrust/gateway/cmd/populate	[no test files]
+?   	zerotrust/gateway/cmd/security	[no test files]
+?   	zerotrust/gateway/cmd/test_ipfs	[no test files]

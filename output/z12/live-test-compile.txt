@@ -1,0 +1,5 @@
+ok  	zerotrust/gateway	(cached) [no tests to run]
+?   	zerotrust/gateway/cmd/enroll	[no test files]
+?   	zerotrust/gateway/cmd/populate	[no test files]
+?   	zerotrust/gateway/cmd/security	[no test files]
+?   	zerotrust/gateway/cmd/test_ipfs	[no test files]

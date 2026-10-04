@@ -1,0 +1,7 @@
+Storage/privacy measurements collected from TestZ12StorageSerializationSizesAndPrivacy.
+This is a deterministic local serializer fixture with a 164-byte placeholder proof; it is not a live ledger record.
+=== RUN   TestZ12StorageSerializationSizesAndPrivacy
+    zkp_claims_test.go:381: proof_bytes=164 proof_hash_hex_chars=64 public_statement_json_bytes=425 claim_record_json_bytes=1050 audit_record_json_bytes=301
+--- PASS: TestZ12StorageSerializationSizesAndPrivacy (0.00s)
+Stored state excludes diagnosis, labValue, patientSecret, coverageCeiling, merkleSiblings, merkleDirections, policyID.
+Proof bytes and all 13 public inputs are intended channel-visible data.

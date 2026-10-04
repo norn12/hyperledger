@@ -1,0 +1,16 @@
+goos: linux
+goarch: amd64
+pkg: zerotrust/gateway
+cpu: AMD Ryzen 7 PRO 8840HS w/ Radeon 780M Graphics 
+BenchmarkGatewayLocalZKPProcessing-16    	      10	  76327446 ns/op	  76316629 gateway-total-ns/op	    932636 local-verify-ns/op	  74955640 prove-ns/op	      1314 witness-ns/op	21766543 B/op	    3641 allocs/op
+BenchmarkGatewayLocalZKPProcessing-16    	      10	  76097907 ns/op	  76087887 gateway-total-ns/op	    899879 local-verify-ns/op	  74739059 prove-ns/op	      1063 witness-ns/op	21755548 B/op	    3607 allocs/op
+BenchmarkGatewayLocalZKPProcessing-16    	      10	  77679004 ns/op	  77663690 gateway-total-ns/op	   1095898 local-verify-ns/op	  76028014 prove-ns/op	      5647 witness-ns/op	21755783 B/op	    3606 allocs/op
+BenchmarkGatewayLocalZKPProcessing-16    	      10	  79566075 ns/op	  79550572 gateway-total-ns/op	   1003305 local-verify-ns/op	  78040421 prove-ns/op	      2225 witness-ns/op	21753748 B/op	    3598 allocs/op
+BenchmarkGatewayLocalZKPProcessing-16    	      10	  76347465 ns/op	  76336735 gateway-total-ns/op	   1083678 local-verify-ns/op	  74759254 prove-ns/op	      2131 witness-ns/op	21754281 B/op	    3606 allocs/op
+BenchmarkGatewayLocalZKPProcessing-16    	      10	  80527210 ns/op	  80501095 gateway-total-ns/op	   1020708 local-verify-ns/op	  78957788 prove-ns/op	      2235 witness-ns/op	21753553 B/op	    3595 allocs/op
+BenchmarkGatewayLocalZKPProcessing-16    	      10	  76465887 ns/op	  76452661 gateway-total-ns/op	    922563 local-verify-ns/op	  75045442 prove-ns/op	      2231 witness-ns/op	21752856 B/op	    3590 allocs/op
+BenchmarkGatewayLocalZKPProcessing-16    	      10	  75967003 ns/op	  75955789 gateway-total-ns/op	    969390 local-verify-ns/op	  74523427 prove-ns/op	      1482 witness-ns/op	21752879 B/op	    3596 allocs/op
+BenchmarkGatewayLocalZKPProcessing-16    	      10	  76835201 ns/op	  76823238 gateway-total-ns/op	    947078 local-verify-ns/op	  75422272 prove-ns/op	      1975 witness-ns/op	21751640 B/op	    3592 allocs/op
+BenchmarkGatewayLocalZKPProcessing-16    	      10	  76166918 ns/op	  76153595 gateway-total-ns/op	    991321 local-verify-ns/op	  74647192 prove-ns/op	      5577 witness-ns/op	21752742 B/op	    3597 allocs/op
+PASS
+ok  	zerotrust/gateway	25.188s

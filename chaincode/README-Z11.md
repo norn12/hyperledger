@@ -9,6 +9,7 @@ The private witness (diagnosis, laboratory value, patient secret, policy details
 ## Ledger controls
 
 - HospitalMSP role `admin` manages prototype authority, accepted root, and policy registries.
+- Authority registration validates canonical coordinates and rejects off-curve, identity, and non-prime-subgroup BN254 twisted-Edwards points (added in Z12 to close the Z8/Z11 trust-anchor observation).
 - InsurerMSP roles `insurer` or `zkpVerifier` may issue an on-ledger challenge; only `zkpVerifier` may submit a proof.
 - Challenges bind numeric recipient/deployment IDs and root/policy versions, expire after five minutes, and transition `ISSUED -> CONSUMED` with claim acceptance.
 - Nullifier, challenge consumption, claim record, and audit record are written in one chaincode invocation. Fabric's transaction validation/MVCC handles competing writes to the same keys; the test stub does not simulate MVCC.

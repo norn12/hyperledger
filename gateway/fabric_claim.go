@@ -22,10 +22,15 @@ type FabricClaimSubmission struct {
 	PublicStatement PublicStatement `json:"publicStatement"`
 }
 type FabricClaimSubmitResult struct {
-	TransactionID string `json:"transactionId"`
-	BlockNumber   uint64 `json:"blockNumber"`
-	ClaimID       string `json:"claimId"`
-	Status        string `json:"status"`
+	TransactionID             string `json:"transactionId"`
+	BlockNumber               uint64 `json:"blockNumber"`
+	ClaimID                   string `json:"claimId"`
+	Status                    string `json:"status"`
+	VerificationNanoseconds   int64  `json:"verificationNanoseconds"`
+	SerializationNanoseconds  int64  `json:"serializationNanoseconds"`
+	SubmitCommitNanoseconds   int64  `json:"submitCommitNanoseconds"`
+	TotalNanoseconds          int64  `json:"totalNanoseconds"`
+	SerializedSubmissionBytes int    `json:"serializedSubmissionBytes"`
 }
 type fabricClaimTransport interface {
 	SubmitClaim(string) ([]byte, string, uint64, error)
@@ -97,30 +102,42 @@ func (g *ZeroTrustGateway) IssueFabricClaimChallenge(verifier *HealthClaimGatewa
 	return challenge, nil
 }
 func submitVerifiedHealthClaimProof(verifier *HealthClaimGateway, request ClaimRequest, envelope ProofEnvelope, claimID, authorityID string, transport fabricClaimTransport) (FabricClaimSubmitResult, error) {
+	totalStart := time.Now()
 	if verifier == nil || transport == nil {
 		return FabricClaimSubmitResult{}, fmt.Errorf("verification or Fabric transport is unavailable")
 	}
 	if !fabricClaimIDPattern.MatchString(claimID) || !fabricClaimIDPattern.MatchString(authorityID) {
 		return FabricClaimSubmitResult{}, fmt.Errorf("invalid claim or authority identifier")
 	}
+	verifyStart := time.Now()
 	if _, err := verifier.VerifyHealthClaimProof(request, envelope); err != nil {
 		return FabricClaimSubmitResult{}, fmt.Errorf("CRYPTOGRAPHIC/TRUST VERIFICATION REJECTED: %w", err)
 	}
+	verifyDuration := time.Since(verifyStart)
+	serializeStart := time.Now()
 	submission := FabricClaimSubmission{CircuitID: envelope.CircuitID, CircuitVersion: envelope.CircuitVersion, ClaimID: claimID, AuthorityID: authorityID, Proof: envelope.Proof, ProofHash: envelope.ProofHash, PublicStatement: envelope.PublicStatement}
 	raw, err := json.Marshal(submission)
 	if err != nil {
 		return FabricClaimSubmitResult{}, fmt.Errorf("failed to serialize public claim envelope")
 	}
+	serializeDuration := time.Since(serializeStart)
+	submitStart := time.Now()
 	response, txID, block, err := transport.SubmitClaim(string(raw))
+	submitDuration := time.Since(submitStart)
+	metrics := FabricClaimSubmitResult{TransactionID: txID, BlockNumber: block, ClaimID: claimID, VerificationNanoseconds: verifyDuration.Nanoseconds(), SerializationNanoseconds: serializeDuration.Nanoseconds(), SubmitCommitNanoseconds: submitDuration.Nanoseconds(), TotalNanoseconds: time.Since(totalStart).Nanoseconds(), SerializedSubmissionBytes: len(raw)}
 	if err != nil {
-		return FabricClaimSubmitResult{TransactionID: txID, BlockNumber: block, ClaimID: claimID, Status: "REJECTED"}, err
+		metrics.Status = "REJECTED"
+		return metrics, err
 	}
 	var accepted struct {
 		ClaimID string `json:"claimId"`
 		Status  string `json:"status"`
 	}
 	if err = json.Unmarshal(response, &accepted); err != nil {
-		return FabricClaimSubmitResult{}, fmt.Errorf("Fabric accepted transaction but returned malformed claim metadata")
+		return metrics, fmt.Errorf("Fabric accepted transaction but returned malformed claim metadata")
 	}
-	return FabricClaimSubmitResult{TransactionID: txID, BlockNumber: block, ClaimID: accepted.ClaimID, Status: accepted.Status}, nil
+	metrics.ClaimID = accepted.ClaimID
+	metrics.Status = accepted.Status
+	metrics.TotalNanoseconds = time.Since(totalStart).Nanoseconds()
+	return metrics, nil
 }

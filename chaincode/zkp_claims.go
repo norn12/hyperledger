@@ -30,6 +30,53 @@ const (
 
 var claimIDPattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$`)
 var bn254ScalarModulus, _ = new(big.Int).SetString("21888242871839275222246405745257275088548364400416034343698204186575808495617", 10)
+var bn254EdwardsD, _ = new(big.Int).SetString("12181644023421730124874158521699555681764249180949974110617291017600649128846", 10)
+var bn254EdwardsSubgroupOrder, _ = new(big.Int).SetString("2736030358979909402780800718157159386076813972158567259200215660948447373041", 10)
+
+type edwardsExtendedPoint struct{ x, y, z, t *big.Int }
+
+func edwardsMod(v *big.Int) *big.Int { return new(big.Int).Mod(v, bn254ScalarModulus) }
+func edwardsAdd(p, q edwardsExtendedPoint) edwardsExtendedPoint {
+	a := edwardsMod(new(big.Int).Mul(edwardsMod(new(big.Int).Sub(p.y, p.x)), edwardsMod(new(big.Int).Sub(q.y, q.x))))
+	b := edwardsMod(new(big.Int).Mul(edwardsMod(new(big.Int).Add(p.y, p.x)), edwardsMod(new(big.Int).Add(q.y, q.x))))
+	c := edwardsMod(new(big.Int).Mul(big.NewInt(2), edwardsMod(new(big.Int).Mul(bn254EdwardsD, edwardsMod(new(big.Int).Mul(p.t, q.t))))))
+	d := edwardsMod(new(big.Int).Mul(big.NewInt(2), edwardsMod(new(big.Int).Mul(p.z, q.z))))
+	e := edwardsMod(new(big.Int).Sub(b, a))
+	f := edwardsMod(new(big.Int).Sub(d, c))
+	g := edwardsMod(new(big.Int).Add(d, c))
+	h := edwardsMod(new(big.Int).Add(b, a))
+	return edwardsExtendedPoint{
+		edwardsMod(new(big.Int).Mul(e, f)), edwardsMod(new(big.Int).Mul(g, h)),
+		edwardsMod(new(big.Int).Mul(f, g)), edwardsMod(new(big.Int).Mul(e, h)),
+	}
+}
+
+// validAuthorityEdwardsPoint mirrors the Gateway's BN254 twisted-Edwards
+// trust-anchor checks: canonical coordinates, on-curve, non-identity, and
+// membership in the prime-order subgroup. Extended coordinates avoid inversions.
+func validAuthorityEdwardsPoint(xText, yText string) bool {
+	if !canonicalField(xText) || !canonicalField(yText) {
+		return false
+	}
+	x, _ := new(big.Int).SetString(xText, 10)
+	y, _ := new(big.Int).SetString(yText, 10)
+	x2 := edwardsMod(new(big.Int).Mul(x, x))
+	y2 := edwardsMod(new(big.Int).Mul(y, y))
+	lhs := edwardsMod(new(big.Int).Add(new(big.Int).Neg(x2), y2))
+	rhs := edwardsMod(new(big.Int).Add(big.NewInt(1), edwardsMod(new(big.Int).Mul(bn254EdwardsD, edwardsMod(new(big.Int).Mul(x2, y2))))))
+	if lhs.Cmp(rhs) != 0 || (x.Sign() == 0 && y.Cmp(big.NewInt(1)) == 0) {
+		return false
+	}
+	p := edwardsExtendedPoint{x, y, big.NewInt(1), edwardsMod(new(big.Int).Mul(x, y))}
+	acc := edwardsExtendedPoint{big.NewInt(0), big.NewInt(1), big.NewInt(1), big.NewInt(0)}
+	for i := 0; i < bn254EdwardsSubgroupOrder.BitLen(); i++ {
+		if bn254EdwardsSubgroupOrder.Bit(i) == 1 {
+			acc = edwardsAdd(acc, p)
+		}
+		p = edwardsAdd(p, p)
+	}
+	return acc.x.Sign() == 0 && edwardsMod(new(big.Int).Sub(acc.y, acc.z)).Sign() == 0
+}
 
 // PublicClaimStatement mirrors HealthClaimHardened public inputs. These values
 // are public; chaincode never accepts or stores a private witness.
@@ -122,6 +169,11 @@ type HealthClaimAudit struct {
 	Status        string `json:"status"`
 	Timestamp     string `json:"timestamp"`
 	TransactionID string `json:"transactionId"`
+}
+type HealthClaimNullifierStatus struct {
+	Nullifier string `json:"nullifier"`
+	Used      bool   `json:"used"`
+	ClaimID   string `json:"claimId,omitempty"`
 }
 
 func canonicalField(s string) bool {
@@ -219,6 +271,9 @@ func (c *ZeroTrustBlockContract) RegisterTrustedAuthority(ctx contractapi.Transa
 	}
 	if !validClaimID(authorityID) || !canonicalField(keyX) || !canonicalField(keyY) {
 		return fmt.Errorf("invalid authority record")
+	}
+	if !validAuthorityEdwardsPoint(keyX, keyY) {
+		return fmt.Errorf("authority key must be a non-identity subgroup point")
 	}
 	stamp, e := getTxTimestampString(ctx)
 	if e != nil {
@@ -540,6 +595,50 @@ func (c *ZeroTrustBlockContract) GetHealthClaimAudit(ctx contractapi.Transaction
 		return nil, e
 	}
 	return &audit, nil
+}
+
+// GetHealthClaimChallenge exposes lifecycle state to authorized channel users
+// for end-to-end verification and operational audit.
+func (c *ZeroTrustBlockContract) GetHealthClaimChallenge(ctx contractapi.TransactionContextInterface, challengeValue string) (*ClaimChallenge, error) {
+	if !canonicalField(challengeValue) {
+		return nil, fmt.Errorf("invalid challenge")
+	}
+	if e := requireClaimReader(ctx); e != nil {
+		return nil, e
+	}
+	key, e := stateKey(ctx, zkChallengeNamespace, challengeValue)
+	if e != nil {
+		return nil, e
+	}
+	var challenge ClaimChallenge
+	if e = getJSON(ctx, key, &challenge); e != nil {
+		return nil, e
+	}
+	return &challenge, nil
+}
+
+// GetHealthClaimNullifier reports whether a record-bound nullifier has been
+// consumed and, if so, the accepted claim that consumed it.
+func (c *ZeroTrustBlockContract) GetHealthClaimNullifier(ctx contractapi.TransactionContextInterface, nullifier string) (*HealthClaimNullifierStatus, error) {
+	if !canonicalField(nullifier) {
+		return nil, fmt.Errorf("invalid nullifier")
+	}
+	if e := requireClaimReader(ctx); e != nil {
+		return nil, e
+	}
+	key, e := stateKey(ctx, zkNullifierNamespace, nullifier)
+	if e != nil {
+		return nil, e
+	}
+	claimID, e := ctx.GetStub().GetState(key)
+	if e != nil {
+		return nil, e
+	}
+	status := &HealthClaimNullifierStatus{Nullifier: nullifier, Used: claimID != nil}
+	if claimID != nil {
+		status.ClaimID = string(claimID)
+	}
+	return status, nil
 }
 func requireClaimReader(ctx contractapi.TransactionContextInterface) error {
 	if ctx == nil || ctx.GetClientIdentity() == nil {

@@ -1,0 +1,51 @@
+=== RUN   TestSubmitHealthClaimProofStoresPublicClaimAndAuditOnly
+--- PASS: TestSubmitHealthClaimProofStoresPublicClaimAndAuditOnly (0.00s)
+=== RUN   TestClaimNullifierAndChallengeReplayAreAtomic
+--- PASS: TestClaimNullifierAndChallengeReplayAreAtomic (0.00s)
+=== RUN   TestConsumedChallengeCannotAcceptAnotherClaim
+--- PASS: TestConsumedChallengeCannotAcceptAnotherClaim (0.00s)
+=== RUN   TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity
+=== RUN   TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/claim_ID
+=== RUN   TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/proof_hash
+=== RUN   TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/proof_length
+=== RUN   TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/root_version
+=== RUN   TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/root_value
+=== RUN   TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/policy_version
+=== RUN   TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/policy_commitment
+=== RUN   TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/authority
+=== RUN   TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/authority_key
+=== RUN   TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/wrong_challenge_recipient
+=== RUN   TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/wrong_deployment
+=== RUN   TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/malformed_field
+=== RUN   TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/unauthorized_MSP
+=== RUN   TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/unauthorized_insurer_role
+--- PASS: TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity (0.03s)
+    --- PASS: TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/claim_ID (0.00s)
+    --- PASS: TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/proof_hash (0.00s)
+    --- PASS: TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/proof_length (0.00s)
+    --- PASS: TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/root_version (0.00s)
+    --- PASS: TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/root_value (0.00s)
+    --- PASS: TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/policy_version (0.00s)
+    --- PASS: TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/policy_commitment (0.00s)
+    --- PASS: TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/authority (0.00s)
+    --- PASS: TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/authority_key (0.00s)
+    --- PASS: TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/wrong_challenge_recipient (0.00s)
+    --- PASS: TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/wrong_deployment (0.00s)
+    --- PASS: TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/malformed_field (0.00s)
+    --- PASS: TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/unauthorized_MSP (0.00s)
+    --- PASS: TestClaimSubmissionRejectsInvalidAnchorsProofAndIdentity/unauthorized_insurer_role (0.00s)
+=== RUN   TestRegistryAndAccessLogAuthorization
+--- PASS: TestRegistryAndAccessLogAuthorization (0.00s)
+=== RUN   TestTrustedAuthorityRegistrationRejectsInvalidEdwardsKeys
+=== RUN   TestTrustedAuthorityRegistrationRejectsInvalidEdwardsKeys/off-curve
+=== RUN   TestTrustedAuthorityRegistrationRejectsInvalidEdwardsKeys/identity
+=== RUN   TestTrustedAuthorityRegistrationRejectsInvalidEdwardsKeys/order-2_torsion
+--- PASS: TestTrustedAuthorityRegistrationRejectsInvalidEdwardsKeys (0.00s)
+    --- PASS: TestTrustedAuthorityRegistrationRejectsInvalidEdwardsKeys/off-curve (0.00s)
+    --- PASS: TestTrustedAuthorityRegistrationRejectsInvalidEdwardsKeys/identity (0.00s)
+    --- PASS: TestTrustedAuthorityRegistrationRejectsInvalidEdwardsKeys/order-2_torsion (0.00s)
+=== RUN   TestZ12StorageSerializationSizesAndPrivacy
+    zkp_claims_test.go:381: proof_bytes=164 proof_hash_hex_chars=64 public_statement_json_bytes=425 claim_record_json_bytes=1050 audit_record_json_bytes=301
+--- PASS: TestZ12StorageSerializationSizesAndPrivacy (0.00s)
+PASS
+ok  	zero-trust-health	0.059s

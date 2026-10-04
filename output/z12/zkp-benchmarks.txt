@@ -1,0 +1,26 @@
+goos: linux
+goarch: amd64
+pkg: zerotrust/healthclaimhardened
+cpu: AMD Ryzen 7 PRO 8840HS w/ Radeon 780M Graphics 
+BenchmarkProofGeneration-16      	      10	  67737804 ns/op	     22021 constraints	       164.0 proof_bytes	21695321 B/op	    2630 allocs/op
+BenchmarkProofGeneration-16      	      10	  68855884 ns/op	     22021 constraints	       164.0 proof_bytes	21689810 B/op	    2611 allocs/op
+BenchmarkProofGeneration-16      	      10	  67286958 ns/op	     22021 constraints	       164.0 proof_bytes	21689833 B/op	    2601 allocs/op
+BenchmarkProofGeneration-16      	      10	  69329207 ns/op	     22021 constraints	       164.0 proof_bytes	21688976 B/op	    2597 allocs/op
+BenchmarkProofGeneration-16      	      10	  70340047 ns/op	     22021 constraints	       164.0 proof_bytes	21689038 B/op	    2599 allocs/op
+BenchmarkProofGeneration-16      	      10	  70041266 ns/op	     22021 constraints	       164.0 proof_bytes	21688580 B/op	    2599 allocs/op
+BenchmarkProofGeneration-16      	      10	  72067578 ns/op	     22021 constraints	       164.0 proof_bytes	21688428 B/op	    2600 allocs/op
+BenchmarkProofGeneration-16      	      10	  72436167 ns/op	     22021 constraints	       164.0 proof_bytes	21688026 B/op	    2596 allocs/op
+BenchmarkProofGeneration-16      	      10	  76695102 ns/op	     22021 constraints	       164.0 proof_bytes	21689656 B/op	    2608 allocs/op
+BenchmarkProofGeneration-16      	      10	  72226818 ns/op	     22021 constraints	       164.0 proof_bytes	21688930 B/op	    2598 allocs/op
+BenchmarkProofVerification-16    	      10	    659513 ns/op	       164.0 proof_bytes	   32682 B/op	     182 allocs/op
+BenchmarkProofVerification-16    	      10	    658981 ns/op	       164.0 proof_bytes	   31876 B/op	     180 allocs/op
+BenchmarkProofVerification-16    	      10	    710676 ns/op	       164.0 proof_bytes	   32413 B/op	     181 allocs/op
+BenchmarkProofVerification-16    	      10	    659667 ns/op	       164.0 proof_bytes	   31876 B/op	     180 allocs/op
+BenchmarkProofVerification-16    	      10	    692935 ns/op	       164.0 proof_bytes	   31876 B/op	     180 allocs/op
+BenchmarkProofVerification-16    	      10	    670670 ns/op	       164.0 proof_bytes	   33936 B/op	     184 allocs/op
+BenchmarkProofVerification-16    	      10	    629682 ns/op	       164.0 proof_bytes	   31876 B/op	     180 allocs/op
+BenchmarkProofVerification-16    	      10	    687488 ns/op	       164.0 proof_bytes	   31876 B/op	     180 allocs/op
+BenchmarkProofVerification-16    	      10	    681882 ns/op	       164.0 proof_bytes	   31876 B/op	     180 allocs/op
+BenchmarkProofVerification-16    	      10	    693782 ns/op	       164.0 proof_bytes	   31876 B/op	     180 allocs/op
+PASS
+ok  	zerotrust/healthclaimhardened	42.621s

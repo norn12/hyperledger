@@ -1,0 +1,78 @@
+=== RUN   TestFailedLocalVerificationDoesNotCallFabricTransport
+--- PASS: TestFailedLocalVerificationDoesNotCallFabricTransport (0.75s)
+=== RUN   TestHealthClaimGatewayValidProofAndPrivateSerialization
+--- PASS: TestHealthClaimGatewayValidProofAndPrivateSerialization (0.78s)
+=== RUN   TestGatewayRejectsEveryMutatedPublicInput
+=== RUN   TestGatewayRejectsEveryMutatedPublicInput/RegistryRoot
+=== RUN   TestGatewayRejectsEveryMutatedPublicInput/ClaimAmount
+=== RUN   TestGatewayRejectsEveryMutatedPublicInput/Nullifier
+=== RUN   TestGatewayRejectsEveryMutatedPublicInput/Challenge
+=== RUN   TestGatewayRejectsEveryMutatedPublicInput/RecipientID
+=== RUN   TestGatewayRejectsEveryMutatedPublicInput/RootVersion
+=== RUN   TestGatewayRejectsEveryMutatedPublicInput/PolicyCommitment
+=== RUN   TestGatewayRejectsEveryMutatedPublicInput/PolicyVersion
+=== RUN   TestGatewayRejectsEveryMutatedPublicInput/AuthorityKeyX
+=== RUN   TestGatewayRejectsEveryMutatedPublicInput/AuthorityKeyY
+=== RUN   TestGatewayRejectsEveryMutatedPublicInput/ProtocolDomain
+=== RUN   TestGatewayRejectsEveryMutatedPublicInput/DeploymentID
+=== RUN   TestGatewayRejectsEveryMutatedPublicInput/ContextCommitment
+--- PASS: TestGatewayRejectsEveryMutatedPublicInput (0.81s)
+    --- PASS: TestGatewayRejectsEveryMutatedPublicInput/RegistryRoot (0.00s)
+    --- PASS: TestGatewayRejectsEveryMutatedPublicInput/ClaimAmount (0.00s)
+    --- PASS: TestGatewayRejectsEveryMutatedPublicInput/Nullifier (0.00s)
+    --- PASS: TestGatewayRejectsEveryMutatedPublicInput/Challenge (0.00s)
+    --- PASS: TestGatewayRejectsEveryMutatedPublicInput/RecipientID (0.00s)
+    --- PASS: TestGatewayRejectsEveryMutatedPublicInput/RootVersion (0.00s)
+    --- PASS: TestGatewayRejectsEveryMutatedPublicInput/PolicyCommitment (0.00s)
+    --- PASS: TestGatewayRejectsEveryMutatedPublicInput/PolicyVersion (0.00s)
+    --- PASS: TestGatewayRejectsEveryMutatedPublicInput/AuthorityKeyX (0.00s)
+    --- PASS: TestGatewayRejectsEveryMutatedPublicInput/AuthorityKeyY (0.00s)
+    --- PASS: TestGatewayRejectsEveryMutatedPublicInput/ProtocolDomain (0.00s)
+    --- PASS: TestGatewayRejectsEveryMutatedPublicInput/DeploymentID (0.00s)
+    --- PASS: TestGatewayRejectsEveryMutatedPublicInput/ContextCommitment (0.00s)
+=== RUN   TestGatewayRejectsUsedNullifier
+--- PASS: TestGatewayRejectsUsedNullifier (0.76s)
+=== RUN   TestGatewayRejectsInvalidClaimAndTrustedCommitmentMismatch
+=== RUN   TestGatewayRejectsInvalidClaimAndTrustedCommitmentMismatch/claim_exceeds_ceiling
+=== RUN   TestGatewayRejectsInvalidClaimAndTrustedCommitmentMismatch/private_policy_does_not_match_anchor
+=== RUN   TestGatewayRejectsInvalidClaimAndTrustedCommitmentMismatch/known_root_value_mismatch
+--- PASS: TestGatewayRejectsInvalidClaimAndTrustedCommitmentMismatch (0.73s)
+    --- PASS: TestGatewayRejectsInvalidClaimAndTrustedCommitmentMismatch/claim_exceeds_ceiling (0.00s)
+    --- PASS: TestGatewayRejectsInvalidClaimAndTrustedCommitmentMismatch/private_policy_does_not_match_anchor (0.00s)
+    --- PASS: TestGatewayRejectsInvalidClaimAndTrustedCommitmentMismatch/known_root_value_mismatch (0.00s)
+=== RUN   TestHealthClaimGatewayAdversarialPreflightAndFailClosed
+=== RUN   TestHealthClaimGatewayAdversarialPreflightAndFailClosed/missing_witness
+=== RUN   TestHealthClaimGatewayAdversarialPreflightAndFailClosed/unregistered_authority
+=== RUN   TestHealthClaimGatewayAdversarialPreflightAndFailClosed/untrusted_root
+=== RUN   TestHealthClaimGatewayAdversarialPreflightAndFailClosed/untrusted_policy
+=== RUN   TestHealthClaimGatewayAdversarialPreflightAndFailClosed/invalid_claim_amount
+=== RUN   TestHealthClaimGatewayAdversarialPreflightAndFailClosed/invalid_signature
+=== RUN   TestHealthClaimGatewayAdversarialPreflightAndFailClosed/invalid_Merkle_witness
+=== RUN   TestHealthClaimGatewayAdversarialPreflightAndFailClosed/wrong_challenge
+=== RUN   TestHealthClaimGatewayAdversarialPreflightAndFailClosed/wrong_recipient
+=== RUN   TestHealthClaimGatewayAdversarialPreflightAndFailClosed/wrong_deployment
+=== RUN   TestHealthClaimGatewayAdversarialPreflightAndFailClosed/local_verification_failure_stops_result
+=== RUN   TestHealthClaimGatewayAdversarialPreflightAndFailClosed/registered_but_wrong_authority_key
+--- PASS: TestHealthClaimGatewayAdversarialPreflightAndFailClosed (1.55s)
+    --- PASS: TestHealthClaimGatewayAdversarialPreflightAndFailClosed/missing_witness (0.00s)
+    --- PASS: TestHealthClaimGatewayAdversarialPreflightAndFailClosed/unregistered_authority (0.00s)
+    --- PASS: TestHealthClaimGatewayAdversarialPreflightAndFailClosed/untrusted_root (0.00s)
+    --- PASS: TestHealthClaimGatewayAdversarialPreflightAndFailClosed/untrusted_policy (0.00s)
+    --- PASS: TestHealthClaimGatewayAdversarialPreflightAndFailClosed/invalid_claim_amount (0.00s)
+    --- PASS: TestHealthClaimGatewayAdversarialPreflightAndFailClosed/invalid_signature (0.00s)
+    --- PASS: TestHealthClaimGatewayAdversarialPreflightAndFailClosed/invalid_Merkle_witness (0.00s)
+    --- PASS: TestHealthClaimGatewayAdversarialPreflightAndFailClosed/wrong_challenge (0.00s)
+    --- PASS: TestHealthClaimGatewayAdversarialPreflightAndFailClosed/wrong_recipient (0.00s)
+    --- PASS: TestHealthClaimGatewayAdversarialPreflightAndFailClosed/wrong_deployment (0.00s)
+    --- PASS: TestHealthClaimGatewayAdversarialPreflightAndFailClosed/local_verification_failure_stops_result (0.76s)
+    --- PASS: TestHealthClaimGatewayAdversarialPreflightAndFailClosed/registered_but_wrong_authority_key (0.01s)
+=== RUN   TestIPFSClientEncryptDecrypt
+--- PASS: TestIPFSClientEncryptDecrypt (0.00s)
+=== RUN   TestIPFSClientRejectsTamperedPayload
+--- PASS: TestIPFSClientRejectsTamperedPayload (0.00s)
+PASS
+ok  	zerotrust/gateway	5.410s
+?   	zerotrust/gateway/cmd/enroll	[no test files]
+?   	zerotrust/gateway/cmd/populate	[no test files]
+?   	zerotrust/gateway/cmd/security	[no test files]
+?   	zerotrust/gateway/cmd/test_ipfs	[no test files]

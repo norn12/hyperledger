@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"sort"
 	"strings"
 	"testing"
@@ -113,6 +114,11 @@ type claimTestFixture struct {
 	submission FabricClaimSubmission
 }
 
+const (
+	testAuthorityX = "9671717474070082183213120605117400219616337014328744928644933853176787189663"
+	testAuthorityY = "16950150798460657717958625567821834550301663161624707787222815936182638968203"
+)
+
 func preparedClaim(t *testing.T) claimTestFixture {
 	t.Helper()
 	c := &ZeroTrustBlockContract{}
@@ -120,7 +126,7 @@ func preparedClaim(t *testing.T) claimTestFixture {
 	hospital := newClaimContext(s, "HospitalMSP", "hospital-admin", "admin")
 	insurer := newClaimContext(s, "InsurerMSP", "insurer-user", "insurer")
 	verifier := newClaimContext(s, "InsurerMSP", "zkp-verifier", "zkpVerifier")
-	for _, err := range []error{c.RegisterTrustedAuthority(hospital, "hospital-key", "1", "2"), c.SetAcceptedClaimRoot(hospital, "9", "5", "111"), c.SetAcceptedClaimPolicy(hospital, "9", "3", "222"), c.IssueHealthClaimChallenge(insurer, "777", "12", "9", "5", "3")} {
+	for _, err := range []error{c.RegisterTrustedAuthority(hospital, "hospital-key", testAuthorityX, testAuthorityY), c.SetAcceptedClaimRoot(hospital, "9", "5", "111"), c.SetAcceptedClaimPolicy(hospital, "9", "3", "222"), c.IssueHealthClaimChallenge(insurer, "777", "12", "9", "5", "3")} {
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -130,7 +136,7 @@ func preparedClaim(t *testing.T) claimTestFixture {
 		proof[i] = byte(i)
 	}
 	hash := sha256.Sum256(proof)
-	sub := FabricClaimSubmission{CircuitID: claimCircuitID, CircuitVersion: claimCircuitVersion, ClaimID: "claim-001", AuthorityID: "hospital-key", Proof: proof, ProofHash: hex.EncodeToString(hash[:]), PublicStatement: PublicClaimStatement{RegistryRoot: "111", RootVersion: "5", PolicyCommitment: "222", PolicyVersion: "3", ClaimAmount: "900", AuthorityKeyX: "1", AuthorityKeyY: "2", Nullifier: "333", ProtocolDomain: claimProtocolDomain, Challenge: "777", RecipientID: "12", DeploymentID: "9", ContextCommitment: "444"}}
+	sub := FabricClaimSubmission{CircuitID: claimCircuitID, CircuitVersion: claimCircuitVersion, ClaimID: "claim-001", AuthorityID: "hospital-key", Proof: proof, ProofHash: hex.EncodeToString(hash[:]), PublicStatement: PublicClaimStatement{RegistryRoot: "111", RootVersion: "5", PolicyCommitment: "222", PolicyVersion: "3", ClaimAmount: "900", AuthorityKeyX: testAuthorityX, AuthorityKeyY: testAuthorityY, Nullifier: "333", ProtocolDomain: claimProtocolDomain, Challenge: "777", RecipientID: "12", DeploymentID: "9", ContextCommitment: "444"}}
 	_ = verifier
 	return claimTestFixture{c, s, sub}
 }
@@ -180,6 +186,15 @@ func TestSubmitHealthClaimProofStoresPublicClaimAndAuditOnly(t *testing.T) {
 	if err = json.Unmarshal(f.stub.state[challengeKey], &challenge); err != nil || challenge.Status != "CONSUMED" {
 		t.Fatal("challenge was not consumed")
 	}
+	reader := newClaimContext(f.stub, "InsurerMSP", "insurer", "insurer")
+	queriedChallenge, err := f.contract.GetHealthClaimChallenge(reader, record.PublicStatement.Challenge)
+	if err != nil || queriedChallenge.Status != "CONSUMED" || queriedChallenge.ConsumedBy != record.ClaimID {
+		t.Fatalf("challenge lifecycle query failed: %+v %v", queriedChallenge, err)
+	}
+	queriedNullifier, err := f.contract.GetHealthClaimNullifier(reader, record.PublicStatement.Nullifier)
+	if err != nil || !queriedNullifier.Used || queriedNullifier.ClaimID != record.ClaimID {
+		t.Fatalf("nullifier lifecycle query failed: %+v %v", queriedNullifier, err)
+	}
 }
 func mustJSON(t *testing.T, v any) []byte {
 	t.Helper()
@@ -212,6 +227,23 @@ func TestClaimNullifierAndChallengeReplayAreAtomic(t *testing.T) {
 	}
 	if e := f.contract.IssueHealthClaimChallenge(newClaimContext(f.stub, "InsurerMSP", "insurer-user", "insurer"), "779", "12", "9", "5", "3"); e == nil {
 		t.Fatal("duplicate challenge accepted")
+	}
+}
+
+func TestConsumedChallengeCannotAcceptAnotherClaim(t *testing.T) {
+	f := preparedClaim(t)
+	if _, err := runClaim(t, f, f.submission); err != nil {
+		t.Fatal(err)
+	}
+	replay := f.submission
+	replay.ClaimID = "claim-challenge-replay"
+	replay.PublicStatement.Nullifier = "335"
+	if _, err := runClaim(t, f, replay); err == nil || !strings.Contains(err.Error(), "challenge is missing or already consumed") {
+		t.Fatalf("consumed challenge reuse was not rejected at challenge state: %v", err)
+	}
+	replayKey, _ := f.stub.CreateCompositeKey(zkClaimNamespace, []string{replay.ClaimID})
+	if f.stub.state[replayKey] != nil {
+		t.Fatal("challenge replay wrote another claim")
 	}
 }
 
@@ -295,4 +327,56 @@ func TestRegistryAndAccessLogAuthorization(t *testing.T) {
 	if _, e := runClaim(t, f, f.submission); e == nil || !strings.Contains(e.Error(), "expired") {
 		t.Fatalf("expired challenge accepted: %v", e)
 	}
+}
+
+func TestTrustedAuthorityRegistrationRejectsInvalidEdwardsKeys(t *testing.T) {
+	contract := &ZeroTrustBlockContract{}
+	ctx := newClaimContext(newClaimTestStub(), "HospitalMSP", "admin", "admin")
+	modulusMinusOne := new(big.Int).Sub(bn254ScalarModulus, big.NewInt(1)).String()
+	cases := []struct{ name, x, y string }{
+		{name: "off-curve", x: "1", y: "2"},
+		{name: "identity", x: "0", y: "1"},
+		{name: "order-2 torsion", x: "0", y: modulusMinusOne},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if err := contract.RegisterTrustedAuthority(ctx, "untrusted", tc.x, tc.y); err == nil {
+				t.Fatalf("accepted invalid authority key (%s,%s)", tc.x, tc.y)
+			}
+		})
+	}
+	if err := contract.RegisterTrustedAuthority(ctx, "trusted", testAuthorityX, testAuthorityY); err != nil {
+		t.Fatalf("rejected valid prime-subgroup authority point: %v", err)
+	}
+}
+
+func TestZ12StorageSerializationSizesAndPrivacy(t *testing.T) {
+	f := preparedClaim(t)
+	record, err := runClaim(t, f, f.submission)
+	if err != nil {
+		t.Fatal(err)
+	}
+	publicJSON, err := json.Marshal(record.PublicStatement)
+	if err != nil {
+		t.Fatal(err)
+	}
+	recordJSON, err := json.Marshal(record)
+	if err != nil {
+		t.Fatal(err)
+	}
+	auditKey, _ := f.stub.CreateCompositeKey(zkAuditNamespace, []string{record.ClaimID})
+	var audit HealthClaimAudit
+	if err = json.Unmarshal(f.stub.state[auditKey], &audit); err != nil {
+		t.Fatal(err)
+	}
+	auditJSON, err := json.Marshal(audit)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, forbidden := range []string{"diagnosis", "labValue", "patientSecret", "coverageCeiling", "merkleSiblings", "merkleDirections", "policyID"} {
+		if strings.Contains(string(recordJSON), `"`+forbidden+`"`) || strings.Contains(string(auditJSON), `"`+forbidden+`"`) {
+			t.Fatalf("private field %q appeared in serialized ledger data", forbidden)
+		}
+	}
+	t.Logf("proof_bytes=%d proof_hash_hex_chars=%d public_statement_json_bytes=%d claim_record_json_bytes=%d audit_record_json_bytes=%d", len(record.Proof), len(record.ProofHash), len(publicJSON), len(recordJSON), len(auditJSON))
 }

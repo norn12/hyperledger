@@ -1,0 +1,95 @@
+Z12 environment collection
+2026-10-04T19:12:34+05:30
+Repository: /home/munj/Documents/projects/Hyperledger/health/files
+Git HEAD: 0fe94ecc7eeb5aa03d4a74b7b770690263bae7ed
+Git status:
+ M chaincode/README-Z11.md
+ M chaincode/zkp_claims.go
+ M chaincode/zkp_claims_test.go
+ M gateway/fabric_claim.go
+?? README-Z12.md
+?? gateway/z12_fabric_integration_test.go
+?? output/z12/
+?? scripts/
+
+OS/kernel:
+Linux munj 6.17.0-1032-oem #32-Ubuntu SMP PREEMPT_DYNAMIC Fri Jul 24 05:46:26 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+CPU:
+Architecture:                            x86_64
+CPU(s):                                  16
+Model name:                              AMD Ryzen 7 PRO 8840HS w/ Radeon 780M Graphics
+Thread(s) per core:                      2
+Core(s) per socket:                      8
+Socket(s):                               1
+RAM:
+               total        used        free      shared  buff/cache   available
+Mem:            27Gi       9.2Gi       1.7Gi       173Mi        15Gi        17Gi
+
+Host Go:
+go version go1.22.2 linux/amd64
+Gateway module Go and dependencies:
+go version go1.25.8 linux/amd64
+github.com/hyperledger/fabric-sdk-go v1.0.0
+github.com/consensys/gnark v0.16.3
+github.com/consensys/gnark-crypto v0.21.0
+HealthClaimHardened module Go and dependencies:
+go version go1.25.8 linux/amd64
+github.com/consensys/gnark v0.16.3
+github.com/consensys/gnark-crypto v0.21.0
+Chaincode dependencies:
+github.com/hyperledger/fabric-contract-api-go v1.2.2
+github.com/hyperledger/fabric-chaincode-go v0.0.0-20230731094759-d626e9ab09b9
+
+Docker client/server:
+Docker version 29.1.3, build 29.1.3-0ubuntu3~24.04.2
+Client:
+ Version:           29.1.3
+ API version:       1.52
+ Go version:        go1.24.4
+ Git commit:        29.1.3-0ubuntu3~24.04.2
+ Built:             Wed Apr 29 16:41:06 2026
+ OS/Arch:           linux/amd64
+ Context:           default
+permission denied while trying to connect to the docker API at unix:///var/run/docker.sock
+Docker Compose plugin:
+docker: unknown command: docker compose
+
+Run 'docker --help' for more information
+Docker Compose standalone:
+docker-compose version 1.29.2, build unknown
+Docker daemon info:
+Client:
+ Version:    29.1.3
+ Context:    default
+ Debug Mode: false
+ Plugins:
+  trust: Manage trust on Docker images (Docker Inc.)
+    Version:  29.1.3
+    Path:     /usr/libexec/docker/cli-plugins/docker-trust
+
+Server:
+permission denied while trying to connect to the docker API at unix:///var/run/docker.sock
+
+Repository-declared Fabric configuration (not live verification):
+Fabric version: network.sh declares 2.4.9; compose image tags are 2.4
+CA version: network.sh declares 1.5.7
+Organizations: HospitalMSP, InsurerMSP
+Peers: 4 (2 per organization)
+Orderers: 3, etcdraft/Raft (CFT)
+Channel: healthchannel
+Chaincode: health; deploy.sh declares version 1.0 sequence 1
+Endorsement: AND('HospitalMSP.member','InsurerMSP.member')
+TLS: enabled in deploy.sh; Gateway profile uses grpcs peers/orderers and https CAs
+Expected Gateway identity: InsurerMSP zkpVerifier with role=zkpVerifier
+Expected registry admin: HospitalMSP appAdmin with role=admin
+Actual live identity/wallet/network state: not verified
+CLI peer:
+peer:
+ Version: 2.4.9
+ Commit SHA: 2a13518
+ Go version: go1.18.10
+ OS/Arch: linux/amd64
+ Chaincode:
+  Base Docker Label: org.hyperledger.fabric
+  Docker Namespace: hyperledger
+
