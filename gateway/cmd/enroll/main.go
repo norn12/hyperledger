@@ -66,6 +66,13 @@ func main() {
 			Role:     "insurer",
 			Secret:   "insurerpw",
 		},
+		{
+			Username: "zkpVerifier",
+			OrgName:  "InsurerOrg",
+			MSPId:    "InsurerMSP",
+			Role:     "zkpVerifier",
+			Secret:   "zkpVerifierpw",
+		},
 	}
 
 	for _, u := range users {

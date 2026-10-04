@@ -59,6 +59,9 @@ func getTxTimestampString(ctx contractapi.TransactionContextInterface) (string, 
 }
 
 func (c *ZeroTrustBlockContract) CreateHealthRecord(ctx contractapi.TransactionContextInterface, recordID string, patientID string, dataHash string, offChainPointer string, zkpProofHash string, recordType string, accessPolicy string) error {
+	if _, _, err := requireFabricRoleAny(ctx, "HospitalMSP", "doctor", "admin"); err != nil {
+		return err
+	}
 	existing, err := ctx.GetStub().GetState(recordID)
 	if err != nil {
 		return fmt.Errorf("failed to read state: %v", err)
@@ -108,6 +111,14 @@ func (c *ZeroTrustBlockContract) CreateHealthRecord(ctx contractapi.TransactionC
 }
 
 func (c *ZeroTrustBlockContract) ReadHealthRecord(ctx contractapi.TransactionContextInterface, recordID string, zkpProofHash string) (*ReadHealthRecordResult, error) {
+	msp, identityErr := ctx.GetClientIdentity().GetMSPID()
+	if identityErr != nil || (msp != "HospitalMSP" && msp != "InsurerMSP") {
+		return nil, fmt.Errorf("unauthorized MSP")
+	}
+	role, foundRole, roleErr := ctx.GetClientIdentity().GetAttributeValue("role")
+	if roleErr != nil || !foundRole || (role != "admin" && role != "doctor" && role != "insurer" && role != "zkpVerifier") {
+		return nil, fmt.Errorf("unauthorized role")
+	}
 	requesterID, err := ctx.GetClientIdentity().GetID()
 	if err != nil || requesterID == "" {
 		requesterID = "UNKNOWN_CLIENT"
@@ -130,7 +141,7 @@ func (c *ZeroTrustBlockContract) ReadHealthRecord(ctx contractapi.TransactionCon
 		if err := c.logAccess(ctx, recordID, requesterID, "READ", false, false); err != nil {
 			return nil, fmt.Errorf("failed to write audit log: %v", err)
 		}
-		return &ReadHealthRecordResult{Allowed: false, Record: &record, Error: fmt.Sprintf("access denied: patient consent has been revoked for record %s", recordID)}, nil
+		return &ReadHealthRecordResult{Allowed: false, Record: nil, Error: "access denied: patient consent has been revoked"}, nil
 	}
 
 	clientMSP, err := ctx.GetClientIdentity().GetMSPID()
@@ -146,8 +157,8 @@ func (c *ZeroTrustBlockContract) ReadHealthRecord(ctx contractapi.TransactionCon
 	if !granted {
 		return &ReadHealthRecordResult{
 			Allowed: false,
-			Record:  &record,
-			Error:   fmt.Sprintf("access denied for identity %s (MSP: %s) on record %s", requesterID, clientMSP, recordID),
+			Record:  nil,
+			Error:   "access denied",
 		}, nil
 	}
 
@@ -206,9 +217,10 @@ func (c *ZeroTrustBlockContract) UpdateZKPProof(ctx contractapi.TransactionConte
 		return fmt.Errorf("record %s not found", recordID)
 	}
 
-	clientMSP, err := ctx.GetClientIdentity().GetMSPID()
-	if err != nil || (clientMSP != "HospitalMSP" && clientMSP != "InsurerMSP") {
-		return fmt.Errorf("unauthorized: client MSP %s is not permitted to update ZKP proof", clientMSP)
+	if _, _, err := requireFabricRoleAny(ctx, "HospitalMSP", "admin"); err != nil {
+		if _, _, verifierErr := requireFabricRoleAny(ctx, "InsurerMSP", "zkpVerifier"); verifierErr != nil {
+			return fmt.Errorf("unauthorized to update ZKP proof")
+		}
 	}
 
 	if strings.TrimSpace(newZKPProofHash) == "" {
@@ -233,6 +245,14 @@ func (c *ZeroTrustBlockContract) UpdateZKPProof(ctx contractapi.TransactionConte
 }
 
 func (c *ZeroTrustBlockContract) GetAccessLogs(ctx contractapi.TransactionContextInterface, recordID string) ([]AccessLog, error) {
+	if !validClaimID(recordID) {
+		return nil, fmt.Errorf("invalid record ID")
+	}
+	if _, _, err := requireFabricRoleAny(ctx, "HospitalMSP", "admin"); err != nil {
+		if _, _, insurerErr := requireFabricRoleAny(ctx, "InsurerMSP", "admin"); insurerErr != nil {
+			return nil, fmt.Errorf("unauthorized to read access logs")
+		}
+	}
 	iterator, err := ctx.GetStub().GetStateByPartialCompositeKey("log", []string{recordID})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get logs: %v", err)
@@ -294,7 +314,10 @@ func (c *ZeroTrustBlockContract) evaluateAccessPolicy(ctx contractapi.Transactio
 		}
 	}
 
-	return true, true
+	// This legacy path sees only a proof hash, not a ZK proof or trusted
+	// verifier attestation. It may treat the hash as a required artifact, but
+	// must not claim that the proof itself was cryptographically verified.
+	return true, false
 }
 
 func (c *ZeroTrustBlockContract) logAccess(ctx contractapi.TransactionContextInterface, recordID, requesterID, action string, granted bool, zkpVerified bool) error {
