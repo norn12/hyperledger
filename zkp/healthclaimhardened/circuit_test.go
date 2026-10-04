@@ -17,18 +17,51 @@ import (
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/frontend/cs/r1cs"
+	circuitedwards "github.com/consensys/gnark/std/algebra/native/twistededwards"
 	"github.com/consensys/gnark/std/signature/eddsa"
 	"github.com/consensys/gnark/test"
 )
 
 func bi(v int64) *big.Int { return big.NewInt(v) }
 
-func fixture(t testing.TB) (*HealthClaimHardened, error) {
+func deterministicAuthorityKey(t testing.TB) *cryptoed.PrivateKey {
 	t.Helper()
 	key, err := cryptoed.GenerateKey(bytes.NewReader(bytes.Repeat([]byte{0x42}, 32)))
 	if err != nil {
-		return nil, err
+		t.Fatal(err)
 	}
+	return key
+}
+
+func valueBigInt(v frontend.Variable) *big.Int {
+	switch value := v.(type) {
+	case *big.Int:
+		return new(big.Int).Set(value)
+	case big.Int:
+		return new(big.Int).Set(&value)
+	case int:
+		return big.NewInt(int64(value))
+	case int64:
+		return big.NewInt(value)
+	case uint64:
+		return new(big.Int).SetUint64(value)
+	default:
+		panic(fmt.Sprintf("unexpected test witness value %T", v))
+	}
+}
+
+func updateContextCommitment(t testing.TB, w *HealthClaimHardened) {
+	t.Helper()
+	ctx, err := ContextDigest(w.Challenge.(*big.Int), w.RecipientID.(*big.Int), w.DeploymentID.(*big.Int), w.PolicyVersion.(*big.Int), w.RootVersion.(*big.Int), w.PolicyCommitment.(*big.Int), w.RegistryRoot.(*big.Int), w.AuthorityKeyX.(*big.Int), w.AuthorityKeyY.(*big.Int), w.Nullifier.(*big.Int), w.ClaimAmount.(*big.Int))
+	if err != nil {
+		t.Fatal(err)
+	}
+	w.ContextCommitment = ctx
+}
+
+func fixture(t testing.TB) (*HealthClaimHardened, error) {
+	t.Helper()
+	key := deterministicAuthorityKey(t)
 	diagnoses := [DiagnosisSetSize]*big.Int{bi(41), bi(9), bi(77), bi(103)}
 	secret, diagnosis, lab, policyID, coverage := bi(999), bi(41), bi(6), bi(12), bi(1000)
 	leaf := RecordLeaf(diagnosis, lab, policyID, coverage, SecretCommitment(secret))
@@ -69,6 +102,42 @@ func fixture(t testing.TB) (*HealthClaimHardened, error) {
 		w.MerkleSiblings[i], w.MerkleDirections[i] = path.Siblings[i], path.Directions[i]
 	}
 	return w, nil
+}
+
+// resealWitness creates a fresh internally consistent synthetic statement for
+// boundary tests. It never changes the production circuit or its relation.
+func resealWitness(t testing.TB, w *HealthClaimHardened, key *cryptoed.PrivateKey) {
+	t.Helper()
+	diagnoses := [DiagnosisSetSize]*big.Int{}
+	for i := range diagnoses {
+		diagnoses[i] = valueBigInt(w.CoveredDiagnosis[i])
+	}
+	policyID, labMin, labMax := valueBigInt(w.PolicyID), valueBigInt(w.LabMin), valueBigInt(w.LabMax)
+	policyMax, diagnosis := valueBigInt(w.PolicyMaxClaim), valueBigInt(w.Diagnosis)
+	labValue, ceiling, secret := valueBigInt(w.LabValue), valueBigInt(w.CoverageCeiling), valueBigInt(w.PatientSecret)
+	policyCommitment := PolicyDigest(policyID, labMin, labMax, policyMax, diagnoses)
+	leaf := RecordLeaf(diagnosis, labValue, policyID, ceiling, SecretCommitment(secret))
+	sigBytes, err := SignLeaf(key, leaf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var sig eddsa.Signature
+	sig.Assign(twistededwards.BN254, sigBytes)
+	var path MerklePath
+	for i := 0; i < MerkleDepth; i++ {
+		path.Siblings[i] = valueBigInt(w.MerkleSiblings[i])
+		path.Directions[i] = valueBigInt(w.MerkleDirections[i])
+	}
+	var keyX, keyY big.Int
+	key.PublicKey.A.X.BigInt(&keyX)
+	key.PublicKey.A.Y.BigInt(&keyY)
+	w.AuthorityKeyX, w.AuthorityKeyY = &keyX, &keyY
+	w.PolicyCommitment = policyCommitment
+	w.RegistryRoot = RootFromPath(leaf, path)
+	w.Nullifier = RecordNullifier(secret, IndexFromDirections(path))
+	w.Signature = sig
+	w.ProtocolDomain = ProtocolDomainID
+	updateContextCommitment(t, w)
 }
 
 func TestHardenedRelationAndCoreAdversarialWitnesses(t *testing.T) {
@@ -124,6 +193,146 @@ func TestHardenedRelationAndCoreAdversarialWitnesses(t *testing.T) {
 	}
 }
 
+func TestPrivateWitnessMutationMatrix(t *testing.T) {
+	assignment, err := fixture(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+	mutations := map[string]func(*HealthClaimHardened){
+		"diagnosis":           func(w *HealthClaimHardened) { w.Diagnosis = bi(42) },
+		"lab value":           func(w *HealthClaimHardened) { w.LabValue = bi(7) },
+		"policy ID":           func(w *HealthClaimHardened) { w.PolicyID = bi(13) },
+		"coverage ceiling":    func(w *HealthClaimHardened) { w.CoverageCeiling = bi(999) },
+		"patient secret":      func(w *HealthClaimHardened) { w.PatientSecret = bi(998) },
+		"lab minimum":         func(w *HealthClaimHardened) { w.LabMin = bi(4) },
+		"lab maximum":         func(w *HealthClaimHardened) { w.LabMax = bi(7) },
+		"policy max claim":    func(w *HealthClaimHardened) { w.PolicyMaxClaim = bi(1199) },
+		"covered diagnosis 0": func(w *HealthClaimHardened) { w.CoveredDiagnosis[0] = bi(40) },
+		"covered diagnosis 1": func(w *HealthClaimHardened) { w.CoveredDiagnosis[1] = bi(10) },
+		"covered diagnosis 2": func(w *HealthClaimHardened) { w.CoveredDiagnosis[2] = bi(78) },
+		"covered diagnosis 3": func(w *HealthClaimHardened) { w.CoveredDiagnosis[3] = bi(104) },
+		"signature R.X":       func(w *HealthClaimHardened) { w.Signature.R.X = bi(123) },
+		"signature R.Y":       func(w *HealthClaimHardened) { w.Signature.R.Y = bi(124) },
+		"signature S":         func(w *HealthClaimHardened) { w.Signature.S = bi(0) },
+	}
+	for i := 0; i < MerkleDepth; i++ {
+		level := i
+		mutations[fmt.Sprintf("Merkle sibling %d", level)] = func(w *HealthClaimHardened) { w.MerkleSiblings[level] = bi(int64(9000 + level)) }
+		mutations[fmt.Sprintf("Merkle direction / derived index %d", level)] = func(w *HealthClaimHardened) {
+			if valueBigInt(w.MerkleDirections[level]).Sign() == 0 {
+				w.MerkleDirections[level] = bi(1)
+			} else {
+				w.MerkleDirections[level] = bi(0)
+			}
+		}
+	}
+	for name, mutate := range mutations {
+		t.Run(name, func(t *testing.T) {
+			w := *assignment
+			mutate(&w)
+			if err := test.IsSolved(&HealthClaimHardened{}, &w, ecc.BN254.ScalarField()); err == nil {
+				t.Fatal("private witness mutation preserved the public statement")
+			}
+		})
+	}
+}
+
+func TestRecordNullifierStableAcrossRequestContext(t *testing.T) {
+	first, err := fixture(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+	second := *first
+	second.Challenge = bi(778)
+	second.RecipientID = bi(13)
+	updateContextCommitment(t, &second)
+	if valueBigInt(first.Nullifier).Cmp(valueBigInt(second.Nullifier)) != 0 {
+		t.Fatal("same record produced different nullifiers for a new request")
+	}
+	if valueBigInt(first.ContextCommitment).Cmp(valueBigInt(second.ContextCommitment)) == 0 {
+		t.Fatal("changed request context preserved the context commitment")
+	}
+	for _, assignment := range []*HealthClaimHardened{first, &second} {
+		if err := test.IsSolved(&HealthClaimHardened{}, assignment, ecc.BN254.ScalarField()); err != nil {
+			t.Fatalf("valid record/request witness rejected: %v", err)
+		}
+	}
+}
+
+func TestValidNumericAndPolicyBoundaries(t *testing.T) {
+	key := deterministicAuthorityKey(t)
+	base, err := fixture(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+	valid := func(name string, mutate func(*HealthClaimHardened)) {
+		t.Run(name, func(t *testing.T) {
+			w := *base
+			mutate(&w)
+			resealWitness(t, &w, key)
+			if err := test.IsSolved(&HealthClaimHardened{}, &w, ecc.BN254.ScalarField()); err != nil {
+				t.Fatalf("valid boundary rejected: %v", err)
+			}
+		})
+	}
+	valid("lab equals minimum", func(w *HealthClaimHardened) { w.LabValue = bi(3) })
+	valid("lab equals maximum", func(w *HealthClaimHardened) { w.LabValue = bi(8) })
+	valid("claim equals coverage ceiling", func(w *HealthClaimHardened) { w.ClaimAmount = bi(1000) })
+	valid("coverage equals policy maximum", func(w *HealthClaimHardened) { w.CoverageCeiling, w.PolicyMaxClaim = bi(1000), bi(1000) })
+	for i := 0; i < DiagnosisSetSize; i++ {
+		index := i
+		valid(fmt.Sprintf("diagnosis matches covered entry %d", index), func(w *HealthClaimHardened) { w.Diagnosis = valueBigInt(w.CoveredDiagnosis[index]) })
+	}
+	valid("smallest valid 64-bit values including zero", func(w *HealthClaimHardened) {
+		w.Diagnosis, w.LabValue, w.PolicyID, w.CoverageCeiling = bi(0), bi(0), bi(0), bi(0)
+		w.PatientSecret, w.LabMin, w.LabMax, w.PolicyMaxClaim, w.ClaimAmount = bi(0), bi(0), bi(0), bi(0), bi(0)
+		w.PolicyVersion, w.RootVersion = bi(0), bi(0)
+		w.CoveredDiagnosis = [DiagnosisSetSize]frontend.Variable{bi(0), bi(1), bi(2), bi(3)}
+	})
+	valid("largest valid 64-bit values", func(w *HealthClaimHardened) {
+		max := new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 64), big.NewInt(1))
+		w.Diagnosis, w.LabValue, w.PolicyID, w.CoverageCeiling = max, max, max, max
+		w.PatientSecret, w.LabMin, w.LabMax, w.PolicyMaxClaim, w.ClaimAmount = max, max, max, max, max
+		w.PolicyVersion, w.RootVersion = new(big.Int).Set(max), new(big.Int).Set(max)
+		w.CoveredDiagnosis = [DiagnosisSetSize]frontend.Variable{new(big.Int).Set(max), bi(0), bi(1), bi(2)}
+	})
+}
+
+func TestNegativeAndOverflowRangeInputsRejected(t *testing.T) {
+	base, err := fixture(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+	mutations := map[string]func(*HealthClaimHardened){
+		"negative diagnosis":                func(w *HealthClaimHardened) { w.Diagnosis = bi(-1) },
+		"negative lab value":                func(w *HealthClaimHardened) { w.LabValue = bi(-1) },
+		"negative policy ID":                func(w *HealthClaimHardened) { w.PolicyID = bi(-1) },
+		"negative coverage ceiling":         func(w *HealthClaimHardened) { w.CoverageCeiling = bi(-1) },
+		"negative claim":                    func(w *HealthClaimHardened) { w.ClaimAmount = bi(-1) },
+		"negative lab minimum":              func(w *HealthClaimHardened) { w.LabMin = bi(-1) },
+		"negative lab maximum":              func(w *HealthClaimHardened) { w.LabMax = bi(-1) },
+		"negative policy maximum":           func(w *HealthClaimHardened) { w.PolicyMaxClaim = bi(-1) },
+		"negative covered diagnosis":        func(w *HealthClaimHardened) { w.CoveredDiagnosis[0] = bi(-1) },
+		"negative root version":             func(w *HealthClaimHardened) { w.RootVersion = bi(-1) },
+		"negative policy version":           func(w *HealthClaimHardened) { w.PolicyVersion = bi(-1) },
+		"diagnosis exceeds 64 bits":         func(w *HealthClaimHardened) { w.Diagnosis = new(big.Int).Lsh(big.NewInt(1), 64) },
+		"policy ID exceeds 64 bits":         func(w *HealthClaimHardened) { w.PolicyID = new(big.Int).Lsh(big.NewInt(1), 64) },
+		"lab minimum exceeds 64 bits":       func(w *HealthClaimHardened) { w.LabMin = new(big.Int).Lsh(big.NewInt(1), 64) },
+		"lab maximum exceeds 64 bits":       func(w *HealthClaimHardened) { w.LabMax = new(big.Int).Lsh(big.NewInt(1), 64) },
+		"policy maximum exceeds 64 bits":    func(w *HealthClaimHardened) { w.PolicyMaxClaim = new(big.Int).Lsh(big.NewInt(1), 64) },
+		"covered diagnosis exceeds 64 bits": func(w *HealthClaimHardened) { w.CoveredDiagnosis[0] = new(big.Int).Lsh(big.NewInt(1), 64) },
+	}
+	for name, mutate := range mutations {
+		t.Run(name, func(t *testing.T) {
+			w := *base
+			mutate(&w)
+			if err := test.IsSolved(&HealthClaimHardened{}, &w, ecc.BN254.ScalarField()); err == nil {
+				t.Fatal("invalid range witness solved")
+			}
+		})
+	}
+}
+
 func TestGroth16ProofBindsEveryPublicInput(t *testing.T) {
 	assignment, err := fixture(t)
 	if err != nil {
@@ -151,6 +360,11 @@ func TestGroth16ProofBindsEveryPublicInput(t *testing.T) {
 	}
 	if err := groth16.Verify(proof, vk, pub); err != nil {
 		t.Fatalf("valid proof rejected: %v", err)
+	}
+	// Groth16 verification is stateless; accepting the same proof again here
+	// demonstrates that replay rejection needs external UsedNullifiers state.
+	if err := groth16.Verify(proof, vk, pub); err != nil {
+		t.Fatalf("same valid proof unexpectedly failed its second verification: %v", err)
 	}
 	var proofBytes bytes.Buffer
 	if _, err := proof.WriteTo(&proofBytes); err != nil {
@@ -212,6 +426,61 @@ func TestSelfSelectedAuthorityKeyRequiresVerifierAnchor(t *testing.T) {
 	assignment.ContextCommitment = ctx
 	if err := test.IsSolved(&HealthClaimHardened{}, assignment, ecc.BN254.ScalarField()); err != nil {
 		t.Fatalf("expected self-selected key to satisfy circuit, demonstrating external trust-anchor responsibility: %v", err)
+	}
+}
+
+// Cofactor clearing in the EdDSA verifier makes curve membership insufficient
+// to establish that a supplied authority key is an authorized prime-order key.
+// This test intentionally demonstrates that the circuit accepts proofs under
+// identity and order-2 keys; a trusted registry must reject both.
+func TestIdentityAndTorsionAuthorityKeysAreVerifierRejected(t *testing.T) {
+	ccs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &HealthClaimHardened{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	pk, vk, err := groth16.Setup(ccs)
+	if err != nil {
+		t.Fatal(err)
+	}
+	params, err := circuitedwards.GetCurveParams(twistededwards.BN254)
+	if err != nil {
+		t.Fatal(err)
+	}
+	minusOne := new(big.Int).Sub(Field(), big.NewInt(1))
+	for _, tc := range []struct {
+		name string
+		x, y *big.Int
+	}{
+		{name: "identity", x: bi(0), y: bi(1)},
+		{name: "order-2 torsion point", x: bi(0), y: minusOne},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			w, err := fixture(t)
+			if err != nil {
+				t.Fatal(err)
+			}
+			w.AuthorityKeyX, w.AuthorityKeyY = tc.x, tc.y
+			w.Signature = eddsa.Signature{
+				R: circuitedwards.Point{X: params.Base[0], Y: params.Base[1]},
+				S: bi(1),
+			}
+			updateContextCommitment(t, w)
+			full, err := frontend.NewWitness(w, ecc.BN254.ScalarField())
+			if err != nil {
+				t.Fatal(err)
+			}
+			proof, err := groth16.Prove(ccs, pk, full)
+			if err != nil {
+				t.Fatalf("expected the relation to accept this forged low-order key witness, proving the registry check is essential: %v", err)
+			}
+			pub, err := full.Public()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := groth16.Verify(proof, vk, pub); err != nil {
+				t.Fatalf("expected proof to verify under the supplied low-order key: %v", err)
+			}
+		})
 	}
 }
 

@@ -66,3 +66,26 @@ original valid proof. Expected and observed result: verification rejects; all
 | Policy version above 64 bits | Native helper rejects / passed | Context helper enforces version width before hashing. |
 | Fixed fixture vector | Exact values match / passed | Native and circuit-facing statement values remain deterministic. |
 | Public signal count | 13 / passed | Public/private interface stays explicit and regression-checked. |
+
+## Z8 under-constrainedness and adversarial tests
+
+The following tests were added for Z8 and run with `go test -count=1 -v ./...`.
+All listed assertions passed. “Rejected” means the witness solver returned an
+unsatisfied constraint system; “accepted” in the authority point test is an
+intentional finding showing that point registration/subgroup checks are an
+external verifier responsibility.
+
+| Test | Mutation / observation | Observed result | Security conclusion |
+|---|---|---|---|
+| `TestPrivateWitnessMutationMatrix` | Individually change each of the 31 private witness fields (record fields, policy values/set, signature R/S, all Merkle siblings and directions). | All 31 modified witnesses rejected. | Every private witness coordinate is constrained directly or through the signature, commitment, policy predicate, or Merkle root/nullifier relation. |
+| `TestRecordNullifierStableAcrossRequestContext` | Keep record, secret, path, and nullifier fixed while changing challenge and recipient; reseal context. | Both valid witnesses accepted; nullifier equal, context digest different. | Nullifier is record-bound and stable across requests; request binding is separately provided by context. Reuse prevention is external. |
+| `TestValidNumericAndPolicyBoundaries` | Test exact lab, claim, coverage and diagnosis boundaries; zero/small and maximum 64-bit values. | All valid boundary witnesses accepted. | Inclusive comparisons and 64-bit encodings accept their intended endpoints. |
+| `TestNegativeAndOverflowRangeInputsRejected` | Negative values and over-64-bit values across applicable policy, claim, version, diagnosis, and lab fields. | All 17 malformed cases rejected. | Explicit range encodings prevent negative/overflow aliases for tested fields. |
+| `TestIdentityAndTorsionAuthorityKeysAreVerifierRejected` | Prove using identity `(0,1)` and order-2 torsion `(0,-1)` keys with a constructed valid signature relation. | Both proofs accepted by the circuit. | This is a trust-boundary finding, not a passing rejection test: the verifier/authority registry must reject identity and enforce subgroup membership and registration/status. |
+| `TestGroth16ProofBindsEveryPublicInput` (repeat verification) | Verify one unchanged proof twice. | Both verifications accepted. | Groth16 verification is stateless; a valid proof can be replayed absent challenge-use/nullifier state. |
+
+The test suite also proves rejection after changing each of all 13 public
+inputs in the verifier witness. The test does not claim that an unauthorized
+key is rejected solely by this circuit: `TestSelfSelectedAuthorityKeyRequiresVerifierAnchor`
+demonstrates that a self-selected key can satisfy the relation and must be
+compared against trusted registry state by the verifier.
