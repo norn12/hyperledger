@@ -7,7 +7,6 @@ import "math/big"
 type MerklePath struct {
 	Siblings   [MerkleDepth]*big.Int
 	Directions [MerkleDepth]*big.Int
-	Index      uint64
 }
 
 // RootFromPath computes the native root and rejects malformed directions.

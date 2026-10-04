@@ -96,6 +96,10 @@ func (c *HealthClaimCore) Define(api frontend.API) error {
 		return fmt.Errorf("signature hash: %w", err)
 	}
 	issuerKey := eddsa.PublicKey{A: stdedwards.Point{X: c.AuthorityKeyX, Y: c.AuthorityKeyY}}
+	// Keep point validity explicit at the relation boundary. The registered
+	// issuer key must additionally be checked against trusted state by verifier.
+	curve.AssertIsOnCurve(issuerKey.A)
+	curve.AssertIsOnCurve(c.Signature.R)
 	if err := eddsa.Verify(curve, c.Signature, leaf, issuerKey, &hSig); err != nil {
 		return fmt.Errorf("authority signature: %w", err)
 	}
