@@ -1,0 +1,29 @@
+{
+  "circuit": "HealthClaimCore-v1",
+  "curve": "BN254",
+  "hash": "gnark Poseidon2 default parameters with explicit domain tags",
+  "merkle_depth": 8,
+  "public": {
+    "registry_root": "15460775045360793867654242824691784055760339833977029268293985288506263810664",
+    "policy_commitment": "18353728845947777703138221325623190971591480255476078313118225887487698918477",
+    "claim_amount": "900",
+    "authority_key_x": "14070452813104092816843037928594521276438349285092213189651688290527828028146",
+    "authority_key_y": "6237266299427648898478326541571544039022962170913244090356251217859629927350",
+    "nullifier": "1545258525173338893172070106969423230702423291004155123897663076024887916306"
+  },
+  "private_fixture": {
+    "diagnosis": "41",
+    "lab_value": "6",
+    "policy_id": "12",
+    "coverage_ceiling": "1000",
+    "patient_secret": "999",
+    "lab_min": "3",
+    "lab_max": "8",
+    "policy_max_claim": "1200",
+    "covered_diagnoses": ["41", "9", "77", "103"],
+    "record_index": 9,
+    "merkle_siblings": ["500", "501", "502", "503", "504", "505", "506", "507"],
+    "merkle_directions": ["1", "0", "0", "1", "0", "0", "0", "0"],
+    "authority_key_seed_hex": "4242424242424242424242424242424242424242424242424242424242424242"
+  }
+}
