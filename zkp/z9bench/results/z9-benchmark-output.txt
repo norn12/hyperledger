@@ -1,0 +1,297 @@
+Z9 reproducible benchmark run
+UTC 2026-10-04T10:28:28Z
+go version go1.25.8 linux/amd64
+auto
+Linux munj 6.17.0-1032-oem #32-Ubuntu SMP PREEMPT_DYNAMIC Fri Jul 24 05:46:26 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+CPU(s):                                  16
+Model name:                              AMD Ryzen 7 PRO 8840HS w/ Radeon 780M Graphics
+Thread(s) per core:                      2
+Core(s) per socket:                      8
+Socket(s):                               1
+NUMA node0 CPU(s):                       0-15
+               total        used        free      shared  buff/cache   available
+Mem:            27Gi        10Gi       1.4Gi       296Mi        13Gi        16Gi
+Swap:          8.0Gi       632Ki       8.0Gi
+GOMAXPROCS=16
+Git commit: ee4df56b09ea7f0abbe66f31a8e6e429ec401a0f
+Working tree state at run start:
+?? zkp/benchmark_z9_test.go
+?? zkp/z9bench/
+Core go.mod:
+module zerotrust/healthclaimcore
+
+go 1.25.7
+
+toolchain go1.25.8
+
+require (
+	github.com/consensys/gnark v0.16.3
+	github.com/consensys/gnark-crypto v0.21.0
+)
+
+require (
+Hardened go.mod:
+module zerotrust/healthclaimhardened
+
+go 1.25.7
+
+toolchain go1.25.8
+
+require (
+	github.com/consensys/gnark v0.16.3
+	github.com/consensys/gnark-crypto v0.21.0
+)
+
+require (
+Benchmark policy: Core/Hardened/legacy count=10, benchtime=10x; parameterized components count=5, benchtime=5x.
+
+=== E1 Legacy AgeRange ===
+go version go1.22.2 linux/amd64
+goos: linux
+goarch: amd64
+pkg: zerotrust/zkp
+cpu: AMD Ryzen 7 PRO 8840HS w/ Radeon 780M Graphics
+BenchmarkLegacyAgeRangeGeneration-16       	      10	   8857644 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	 1846490 B/op	    1657 allocs/op
+BenchmarkLegacyAgeRangeGeneration-16       	      10	   8526376 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	 1839286 B/op	    1638 allocs/op
+BenchmarkLegacyAgeRangeGeneration-16       	      10	  10077150 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	 1840528 B/op	    1642 allocs/op
+BenchmarkLegacyAgeRangeGeneration-16       	      10	   9024724 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	 1839979 B/op	    1638 allocs/op
+BenchmarkLegacyAgeRangeGeneration-16       	      10	   8669840 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	 1839858 B/op	    1634 allocs/op
+BenchmarkLegacyAgeRangeGeneration-16       	      10	   8814608 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	 1840221 B/op	    1637 allocs/op
+BenchmarkLegacyAgeRangeGeneration-16       	      10	   8229513 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	 1840520 B/op	    1635 allocs/op
+BenchmarkLegacyAgeRangeGeneration-16       	      10	   8620112 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	 1840055 B/op	    1636 allocs/op
+BenchmarkLegacyAgeRangeGeneration-16       	      10	   8405946 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	 1837145 B/op	    1628 allocs/op
+BenchmarkLegacyAgeRangeGeneration-16       	      10	   8579117 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	 1840302 B/op	    1640 allocs/op
+BenchmarkLegacyAgeRangeVerification-16     	      10	    681636 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	   30652 B/op	     160 allocs/op
+BenchmarkLegacyAgeRangeVerification-16     	      10	    656518 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	   28816 B/op	     156 allocs/op
+BenchmarkLegacyAgeRangeVerification-16     	      10	    659522 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	   28816 B/op	     156 allocs/op
+BenchmarkLegacyAgeRangeVerification-16     	      10	    716088 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	   28816 B/op	     156 allocs/op
+BenchmarkLegacyAgeRangeVerification-16     	      10	    766735 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	   28816 B/op	     156 allocs/op
+BenchmarkLegacyAgeRangeVerification-16     	      10	    653667 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	   28816 B/op	     156 allocs/op
+BenchmarkLegacyAgeRangeVerification-16     	      10	    629218 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	   28816 B/op	     156 allocs/op
+BenchmarkLegacyAgeRangeVerification-16     	      10	    707688 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	   28816 B/op	     156 allocs/op
+BenchmarkLegacyAgeRangeVerification-16     	      10	    603217 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	   28816 B/op	     156 allocs/op
+BenchmarkLegacyAgeRangeVerification-16     	      10	    701901 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	   28816 B/op	     156 allocs/op
+BenchmarkLegacyDiagnosisGeneration-16      	      10	   8411633 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	 1839104 B/op	    1636 allocs/op
+BenchmarkLegacyDiagnosisGeneration-16      	      10	   8630736 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	 1839024 B/op	    1633 allocs/op
+BenchmarkLegacyDiagnosisGeneration-16      	      10	   8568434 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	 1840804 B/op	    1637 allocs/op
+BenchmarkLegacyDiagnosisGeneration-16      	      10	   8576584 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	 1840840 B/op	    1637 allocs/op
+BenchmarkLegacyDiagnosisGeneration-16      	      10	   8542878 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	 1840284 B/op	    1635 allocs/op
+BenchmarkLegacyDiagnosisGeneration-16      	      10	   8789167 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	 1839073 B/op	    1631 allocs/op
+BenchmarkLegacyDiagnosisGeneration-16      	      10	   8620199 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	 1838796 B/op	    1633 allocs/op
+BenchmarkLegacyDiagnosisGeneration-16      	      10	   8583770 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	 1839891 B/op	    1634 allocs/op
+BenchmarkLegacyDiagnosisGeneration-16      	      10	   9131058 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	 1838372 B/op	    1632 allocs/op
+BenchmarkLegacyDiagnosisGeneration-16      	      10	   8524270 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	 1839835 B/op	    1633 allocs/op
+BenchmarkLegacyDiagnosisVerification-16    	      10	    685323 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	   28816 B/op	     156 allocs/op
+BenchmarkLegacyDiagnosisVerification-16    	      10	    672728 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	   28816 B/op	     156 allocs/op
+BenchmarkLegacyDiagnosisVerification-16    	      10	    673010 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	   28816 B/op	     156 allocs/op
+BenchmarkLegacyDiagnosisVerification-16    	      10	    790259 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	   28816 B/op	     156 allocs/op
+BenchmarkLegacyDiagnosisVerification-16    	      10	    617522 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	   28816 B/op	     156 allocs/op
+BenchmarkLegacyDiagnosisVerification-16    	      10	    687339 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	   28816 B/op	     156 allocs/op
+BenchmarkLegacyDiagnosisVerification-16    	      10	    730004 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	   28816 B/op	     156 allocs/op
+BenchmarkLegacyDiagnosisVerification-16    	      10	    691366 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	   28816 B/op	     156 allocs/op
+BenchmarkLegacyDiagnosisVerification-16    	      10	    694329 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	   28816 B/op	     156 allocs/op
+BenchmarkLegacyDiagnosisVerification-16    	      10	    629970 ns/op	      3754 constraints	         1.000 private_vars	       164.0 proof_bytes	         2.000 public_vars	   28816 B/op	     156 allocs/op
+PASS
+ok  	zerotrust/zkp	15.801s
+
+=== E2 Core ===
+=== RUN   TestCoreBenchmarkMetadata
+    metadata_test.go:82: Core constraints=19657 public=6 private=31 proof_bytes=164
+--- PASS: TestCoreBenchmarkMetadata (0.72s)
+=== RUN   TestHardenedBenchmarkMetadata
+    metadata_test.go:90: Hardened constraints=22021 public=13 private=31
+--- PASS: TestHardenedBenchmarkMetadata (0.07s)
+PASS
+ok  	zerotrust/z9bench	0.817s
+go version go1.25.8 linux/amd64
+goos: linux
+goarch: amd64
+pkg: zerotrust/healthclaimcore
+cpu: AMD Ryzen 7 PRO 8840HS w/ Radeon 780M Graphics
+BenchmarkProofGeneration-16      	      10	  63352681 ns/op	21158558 B/op	    2624 allocs/op
+BenchmarkProofGeneration-16      	      10	  72337699 ns/op	21153156 B/op	    2618 allocs/op
+BenchmarkProofGeneration-16      	      10	  63897011 ns/op	21152562 B/op	    2602 allocs/op
+BenchmarkProofGeneration-16      	      10	  63815986 ns/op	21150780 B/op	    2598 allocs/op
+BenchmarkProofGeneration-16      	      10	  64540803 ns/op	21148935 B/op	    2598 allocs/op
+BenchmarkProofGeneration-16      	      10	  64834342 ns/op	21149280 B/op	    2602 allocs/op
+BenchmarkProofGeneration-16      	      10	  67461952 ns/op	21150543 B/op	    2598 allocs/op
+BenchmarkProofGeneration-16      	      10	  65930609 ns/op	21150383 B/op	    2594 allocs/op
+BenchmarkProofGeneration-16      	      10	  65381638 ns/op	21149228 B/op	    2596 allocs/op
+BenchmarkProofGeneration-16      	      10	  66554581 ns/op	21150131 B/op	    2598 allocs/op
+BenchmarkProofVerification-16    	      10	    724995 ns/op	   30384 B/op	     165 allocs/op
+BenchmarkProofVerification-16    	      10	    752363 ns/op	   30384 B/op	     165 allocs/op
+BenchmarkProofVerification-16    	      10	    738762 ns/op	   31235 B/op	     166 allocs/op
+BenchmarkProofVerification-16    	      10	    662769 ns/op	   30384 B/op	     165 allocs/op
+BenchmarkProofVerification-16    	      10	    703908 ns/op	   30384 B/op	     165 allocs/op
+BenchmarkProofVerification-16    	      10	    689677 ns/op	   30384 B/op	     165 allocs/op
+BenchmarkProofVerification-16    	      10	    740940 ns/op	   30384 B/op	     165 allocs/op
+BenchmarkProofVerification-16    	      10	    723793 ns/op	   30652 B/op	     165 allocs/op
+BenchmarkProofVerification-16    	      10	    709424 ns/op	   30384 B/op	     165 allocs/op
+BenchmarkProofVerification-16    	      10	    635390 ns/op	   30384 B/op	     165 allocs/op
+PASS
+ok  	zerotrust/healthclaimcore	38.771s
+
+=== E3 Hardened ===
+go version go1.25.8 linux/amd64
+goos: linux
+goarch: amd64
+pkg: zerotrust/healthclaimhardened
+cpu: AMD Ryzen 7 PRO 8840HS w/ Radeon 780M Graphics
+BenchmarkProofGeneration-16      	      10	  73240033 ns/op	     22021 constraints	       164.0 proof_bytes	21699332 B/op	    2633 allocs/op
+BenchmarkProofGeneration-16      	      10	  73256364 ns/op	     22021 constraints	       164.0 proof_bytes	21690315 B/op	    2607 allocs/op
+BenchmarkProofGeneration-16      	      10	  73627141 ns/op	     22021 constraints	       164.0 proof_bytes	21689100 B/op	    2605 allocs/op
+BenchmarkProofGeneration-16      	      10	  73417670 ns/op	     22021 constraints	       164.0 proof_bytes	21689582 B/op	    2601 allocs/op
+BenchmarkProofGeneration-16      	      10	  73654143 ns/op	     22021 constraints	       164.0 proof_bytes	21689504 B/op	    2598 allocs/op
+BenchmarkProofGeneration-16      	      10	  72517233 ns/op	     22021 constraints	       164.0 proof_bytes	21686166 B/op	    2605 allocs/op
+BenchmarkProofGeneration-16      	      10	  73570585 ns/op	     22021 constraints	       164.0 proof_bytes	21688518 B/op	    2605 allocs/op
+BenchmarkProofGeneration-16      	      10	  75972317 ns/op	     22021 constraints	       164.0 proof_bytes	21689156 B/op	    2599 allocs/op
+BenchmarkProofGeneration-16      	      10	  72292964 ns/op	     22021 constraints	       164.0 proof_bytes	21687949 B/op	    2598 allocs/op
+BenchmarkProofGeneration-16      	      10	  74198593 ns/op	     22021 constraints	       164.0 proof_bytes	21689728 B/op	    2601 allocs/op
+BenchmarkProofVerification-16    	      10	    693210 ns/op	       164.0 proof_bytes	   31876 B/op	     180 allocs/op
+BenchmarkProofVerification-16    	      10	    716980 ns/op	       164.0 proof_bytes	   31876 B/op	     180 allocs/op
+BenchmarkProofVerification-16    	      10	    700086 ns/op	       164.0 proof_bytes	   32368 B/op	     181 allocs/op
+BenchmarkProofVerification-16    	      10	    643992 ns/op	       164.0 proof_bytes	   31876 B/op	     180 allocs/op
+BenchmarkProofVerification-16    	      10	    705383 ns/op	       164.0 proof_bytes	   31876 B/op	     180 allocs/op
+BenchmarkProofVerification-16    	      10	    638023 ns/op	       164.0 proof_bytes	   31876 B/op	     180 allocs/op
+BenchmarkProofVerification-16    	      10	    695261 ns/op	       164.0 proof_bytes	   32055 B/op	     180 allocs/op
+BenchmarkProofVerification-16    	      10	    725894 ns/op	       164.0 proof_bytes	   32682 B/op	     182 allocs/op
+BenchmarkProofVerification-16    	      10	    721372 ns/op	       164.0 proof_bytes	   31876 B/op	     180 allocs/op
+BenchmarkProofVerification-16    	      10	    691426 ns/op	       164.0 proof_bytes	   31876 B/op	     180 allocs/op
+PASS
+ok  	zerotrust/healthclaimhardened	43.688s
+
+=== Separate compile and Groth16 setup costs ===
+goos: linux
+goarch: amd64
+pkg: zerotrust/z9bench
+cpu: AMD Ryzen 7 PRO 8840HS w/ Radeon 780M Graphics
+BenchmarkCircuitCompile/core-16         	       1	  69220250 ns/op	103934064 B/op	  550099 allocs/op
+BenchmarkCircuitCompile/core-16         	       1	  71444981 ns/op	103912496 B/op	  549694 allocs/op
+BenchmarkCircuitCompile/core-16         	       1	  69792441 ns/op	103928312 B/op	  549687 allocs/op
+BenchmarkCircuitCompile/hardened-16     	       1	  76451163 ns/op	109217608 B/op	  595856 allocs/op
+BenchmarkCircuitCompile/hardened-16     	       1	  71266614 ns/op	109233944 B/op	  595879 allocs/op
+BenchmarkCircuitCompile/hardened-16     	       1	  72544617 ns/op	109259096 B/op	  595875 allocs/op
+BenchmarkGroth16Setup/core-16           	       1	 648977116 ns/op	     19657 constraints	35148192 B/op	     639 allocs/op
+BenchmarkGroth16Setup/core-16           	       1	 637683182 ns/op	     19657 constraints	35095888 B/op	     552 allocs/op
+BenchmarkGroth16Setup/core-16           	       1	 663669465 ns/op	     19657 constraints	35091360 B/op	     550 allocs/op
+BenchmarkGroth16Setup/hardened-16       	       1	 725138440 ns/op	     22021 constraints	37381520 B/op	     516 allocs/op
+BenchmarkGroth16Setup/hardened-16       	       1	 766954128 ns/op	     22021 constraints	37372400 B/op	     507 allocs/op
+BenchmarkGroth16Setup/hardened-16       	       1	 715241171 ns/op	     22021 constraints	37388336 B/op	     545 allocs/op
+PASS
+ok  	zerotrust/z9bench	5.061s
+
+=== E4/E5 Component scaling; isolated Poseidon2 Merkle and policy predicates, not full Z7 ===
+go version go1.25.8 linux/amd64
+goos: linux
+goarch: amd64
+pkg: zerotrust/z9bench
+cpu: AMD Ryzen 7 PRO 8840HS w/ Radeon 780M Graphics
+BenchmarkMerkleDepth/depth=4-16   	       5	  11930798 ns/op	      1501 constraints	       164.0 proof_bytes	 1013329 B/op	    1963 allocs/op
+BenchmarkMerkleDepth/depth=4-16   	       5	  11931834 ns/op	      1501 constraints	       164.0 proof_bytes	 1004484 B/op	    1952 allocs/op
+BenchmarkMerkleDepth/depth=4-16   	       5	  11752407 ns/op	      1501 constraints	       164.0 proof_bytes	 1004860 B/op	    1940 allocs/op
+BenchmarkMerkleDepth/depth=4-16   	       5	  11831047 ns/op	      1501 constraints	       164.0 proof_bytes	 1004742 B/op	    1945 allocs/op
+BenchmarkMerkleDepth/depth=4-16   	       5	  11880369 ns/op	      1501 constraints	       164.0 proof_bytes	 1002683 B/op	    1933 allocs/op
+BenchmarkMerkleDepth/depth=8-16   	       5	  20709538 ns/op	      3001 constraints	       164.0 proof_bytes	 1792961 B/op	    2365 allocs/op
+BenchmarkMerkleDepth/depth=8-16   	       5	  21023519 ns/op	      3001 constraints	       164.0 proof_bytes	 1791720 B/op	    2352 allocs/op
+BenchmarkMerkleDepth/depth=8-16   	       5	  20959723 ns/op	      3001 constraints	       164.0 proof_bytes	 1793291 B/op	    2358 allocs/op
+BenchmarkMerkleDepth/depth=8-16   	       5	  21312899 ns/op	      3001 constraints	       164.0 proof_bytes	 1792081 B/op	    2356 allocs/op
+BenchmarkMerkleDepth/depth=8-16   	       5	  23185719 ns/op	      3001 constraints	       164.0 proof_bytes	 1791753 B/op	    2352 allocs/op
+BenchmarkMerkleDepth/depth=16-16  	       5	  38409612 ns/op	      6001 constraints	       164.0 proof_bytes	 3202291 B/op	    2419 allocs/op
+BenchmarkMerkleDepth/depth=16-16  	       5	  32605706 ns/op	      6001 constraints	       164.0 proof_bytes	 3202011 B/op	    2415 allocs/op
+BenchmarkMerkleDepth/depth=16-16  	       5	  33868420 ns/op	      6001 constraints	       164.0 proof_bytes	 3202582 B/op	    2422 allocs/op
+BenchmarkMerkleDepth/depth=16-16  	       5	  32654663 ns/op	      6001 constraints	       164.0 proof_bytes	 3202409 B/op	    2421 allocs/op
+BenchmarkMerkleDepth/depth=16-16  	       5	  31410800 ns/op	      6001 constraints	       164.0 proof_bytes	 3202160 B/op	    2418 allocs/op
+BenchmarkPolicySize/entries=4-16  	       5	  14625780 ns/op	      2776 constraints	       164.0 proof_bytes	 1650860 B/op	    2445 allocs/op
+BenchmarkPolicySize/entries=4-16  	       5	  14613020 ns/op	      2776 constraints	       164.0 proof_bytes	 1652014 B/op	    2457 allocs/op
+BenchmarkPolicySize/entries=4-16  	       5	  14695367 ns/op	      2776 constraints	       164.0 proof_bytes	 1652086 B/op	    2450 allocs/op
+BenchmarkPolicySize/entries=4-16  	       5	  15753170 ns/op	      2776 constraints	       164.0 proof_bytes	 1651364 B/op	    2450 allocs/op
+BenchmarkPolicySize/entries=4-16  	       5	  14749177 ns/op	      2776 constraints	       164.0 proof_bytes	 1652342 B/op	    2461 allocs/op
+BenchmarkPolicySize/entries=8-16  	       5	  18462826 ns/op	      3528 constraints	       164.0 proof_bytes	 1843771 B/op	    2488 allocs/op
+BenchmarkPolicySize/entries=8-16  	       5	  17896597 ns/op	      3528 constraints	       164.0 proof_bytes	 1841835 B/op	    2477 allocs/op
+BenchmarkPolicySize/entries=8-16  	       5	  17555371 ns/op	      3528 constraints	       164.0 proof_bytes	 1844150 B/op	    2492 allocs/op
+BenchmarkPolicySize/entries=8-16  	       5	  17780019 ns/op	      3528 constraints	       164.0 proof_bytes	 1844094 B/op	    2491 allocs/op
+BenchmarkPolicySize/entries=8-16  	       5	  17778039 ns/op	      3528 constraints	       164.0 proof_bytes	 1843934 B/op	    2489 allocs/op
+BenchmarkPolicySize/entries=16-16 	       5	  24275046 ns/op	      5032 constraints	       164.0 proof_bytes	 2884377 B/op	    2635 allocs/op
+BenchmarkPolicySize/entries=16-16 	       5	  36675692 ns/op	      5032 constraints	       164.0 proof_bytes	 2883144 B/op	    2622 allocs/op
+BenchmarkPolicySize/entries=16-16 	       5	  25365705 ns/op	      5032 constraints	       164.0 proof_bytes	 2884928 B/op	    2631 allocs/op
+BenchmarkPolicySize/entries=16-16 	       5	  25211931 ns/op	      5032 constraints	       164.0 proof_bytes	 2885974 B/op	    2650 allocs/op
+BenchmarkPolicySize/entries=16-16 	       5	  25181345 ns/op	      5032 constraints	       164.0 proof_bytes	 2885219 B/op	    2643 allocs/op
+BenchmarkPolicySize/entries=32-16 	       5	  33753236 ns/op	      8040 constraints	       164.0 proof_bytes	 3603241 B/op	    2810 allocs/op
+BenchmarkPolicySize/entries=32-16 	       5	  35575601 ns/op	      8040 constraints	       164.0 proof_bytes	 3602977 B/op	    2807 allocs/op
+BenchmarkPolicySize/entries=32-16 	       5	  34735713 ns/op	      8040 constraints	       164.0 proof_bytes	 3603160 B/op	    2809 allocs/op
+BenchmarkPolicySize/entries=32-16 	       5	  34501297 ns/op	      8040 constraints	       164.0 proof_bytes	 3603454 B/op	    2804 allocs/op
+BenchmarkPolicySize/entries=32-16 	       5	  37742698 ns/op	      8040 constraints	       164.0 proof_bytes	 3603233 B/op	    2802 allocs/op
+BenchmarkMerkleVerification/depth=4-16         	       5	    681871 ns/op	      1501 constraints	       164.0 proof_bytes	   30628 B/op	     157 allocs/op
+BenchmarkMerkleVerification/depth=4-16         	       5	    680777 ns/op	      1501 constraints	       164.0 proof_bytes	   29464 B/op	     155 allocs/op
+BenchmarkMerkleVerification/depth=4-16         	       5	    651586 ns/op	      1501 constraints	       164.0 proof_bytes	   29464 B/op	     155 allocs/op
+BenchmarkMerkleVerification/depth=4-16         	       5	    574354 ns/op	      1501 constraints	       164.0 proof_bytes	   29464 B/op	     155 allocs/op
+BenchmarkMerkleVerification/depth=4-16         	       5	    625862 ns/op	      1501 constraints	       164.0 proof_bytes	   29464 B/op	     155 allocs/op
+BenchmarkMerkleVerification/depth=8-16         	       5	    694122 ns/op	      3001 constraints	       164.0 proof_bytes	   29464 B/op	     155 allocs/op
+BenchmarkMerkleVerification/depth=8-16         	       5	    608669 ns/op	      3001 constraints	       164.0 proof_bytes	   29464 B/op	     155 allocs/op
+BenchmarkMerkleVerification/depth=8-16         	       5	    608657 ns/op	      3001 constraints	       164.0 proof_bytes	   29464 B/op	     155 allocs/op
+BenchmarkMerkleVerification/depth=8-16         	       5	    621754 ns/op	      3001 constraints	       164.0 proof_bytes	   29464 B/op	     155 allocs/op
+BenchmarkMerkleVerification/depth=8-16         	       5	    757552 ns/op	      3001 constraints	       164.0 proof_bytes	   29464 B/op	     155 allocs/op
+BenchmarkMerkleVerification/depth=16-16        	       5	    684288 ns/op	      6001 constraints	       164.0 proof_bytes	   29464 B/op	     155 allocs/op
+BenchmarkMerkleVerification/depth=16-16        	       5	    697066 ns/op	      6001 constraints	       164.0 proof_bytes	   29464 B/op	     155 allocs/op
+BenchmarkMerkleVerification/depth=16-16        	       5	    686284 ns/op	      6001 constraints	       164.0 proof_bytes	   29464 B/op	     155 allocs/op
+BenchmarkMerkleVerification/depth=16-16        	       5	    674984 ns/op	      6001 constraints	       164.0 proof_bytes	   29464 B/op	     155 allocs/op
+BenchmarkMerkleVerification/depth=16-16        	       5	    625188 ns/op	      6001 constraints	       164.0 proof_bytes	   29464 B/op	     155 allocs/op
+BenchmarkPolicyVerification/entries=4-16       	       5	    617618 ns/op	      2776 constraints	       164.0 proof_bytes	   29464 B/op	     155 allocs/op
+BenchmarkPolicyVerification/entries=4-16       	       5	    636538 ns/op	      2776 constraints	       164.0 proof_bytes	   29464 B/op	     155 allocs/op
+BenchmarkPolicyVerification/entries=4-16       	       5	    645775 ns/op	      2776 constraints	       164.0 proof_bytes	   29464 B/op	     155 allocs/op
+BenchmarkPolicyVerification/entries=4-16       	       5	    629422 ns/op	      2776 constraints	       164.0 proof_bytes	   29464 B/op	     155 allocs/op
+BenchmarkPolicyVerification/entries=4-16       	       5	    719258 ns/op	      2776 constraints	       164.0 proof_bytes	   29464 B/op	     155 allocs/op
+BenchmarkPolicyVerification/entries=8-16       	       5	    621798 ns/op	      3528 constraints	       164.0 proof_bytes	   29464 B/op	     155 allocs/op
+BenchmarkPolicyVerification/entries=8-16       	       5	    663459 ns/op	      3528 constraints	       164.0 proof_bytes	   29464 B/op	     155 allocs/op
+BenchmarkPolicyVerification/entries=8-16       	       5	    642024 ns/op	      3528 constraints	       164.0 proof_bytes	   29464 B/op	     155 allocs/op
+BenchmarkPolicyVerification/entries=8-16       	       5	    633895 ns/op	      3528 constraints	       164.0 proof_bytes	   29464 B/op	     155 allocs/op
+BenchmarkPolicyVerification/entries=8-16       	       5	    589054 ns/op	      3528 constraints	       164.0 proof_bytes	   29464 B/op	     155 allocs/op
+BenchmarkPolicyVerification/entries=16-16      	       5	    710586 ns/op	      5032 constraints	       164.0 proof_bytes	   29464 B/op	     155 allocs/op
+BenchmarkPolicyVerification/entries=16-16      	       5	    701360 ns/op	      5032 constraints	       164.0 proof_bytes	   29464 B/op	     155 allocs/op
+BenchmarkPolicyVerification/entries=16-16      	       5	    621073 ns/op	      5032 constraints	       164.0 proof_bytes	   29464 B/op	     155 allocs/op
+BenchmarkPolicyVerification/entries=16-16      	       5	    786315 ns/op	      5032 constraints	       164.0 proof_bytes	   29464 B/op	     155 allocs/op
+BenchmarkPolicyVerification/entries=16-16      	       5	    665016 ns/op	      5032 constraints	       164.0 proof_bytes	   29464 B/op	     155 allocs/op
+BenchmarkPolicyVerification/entries=32-16      	       5	    729343 ns/op	      8040 constraints	       164.0 proof_bytes	   29464 B/op	     155 allocs/op
+BenchmarkPolicyVerification/entries=32-16      	       5	    744081 ns/op	      8040 constraints	       164.0 proof_bytes	   29464 B/op	     155 allocs/op
+BenchmarkPolicyVerification/entries=32-16      	       5	    720017 ns/op	      8040 constraints	       164.0 proof_bytes	   31076 B/op	     158 allocs/op
+BenchmarkPolicyVerification/entries=32-16      	       5	    681258 ns/op	      8040 constraints	       164.0 proof_bytes	   29464 B/op	     155 allocs/op
+BenchmarkPolicyVerification/entries=32-16      	       5	    661970 ns/op	      8040 constraints	       164.0 proof_bytes	   29464 B/op	     155 allocs/op
+PASS
+ok  	zerotrust/z9bench	35.331s
+
+=== E9 Local witness construction microbenchmark ===
+go version go1.25.8 linux/amd64
+goos: linux
+goarch: amd64
+pkg: zerotrust/z9bench
+cpu: AMD Ryzen 7 PRO 8840HS w/ Radeon 780M Graphics
+BenchmarkWitnessConstruction-16    	      10	    368203 ns/op	   18401 B/op	     524 allocs/op
+BenchmarkWitnessConstruction-16    	      10	    298588 ns/op	   18468 B/op	     524 allocs/op
+BenchmarkWitnessConstruction-16    	      10	    299659 ns/op	   18396 B/op	     524 allocs/op
+BenchmarkWitnessConstruction-16    	      10	    299754 ns/op	   18396 B/op	     524 allocs/op
+BenchmarkWitnessConstruction-16    	      10	    371119 ns/op	   18392 B/op	     524 allocs/op
+BenchmarkWitnessConstruction-16    	      10	    404994 ns/op	   18396 B/op	     524 allocs/op
+BenchmarkWitnessConstruction-16    	      10	    329000 ns/op	   18392 B/op	     524 allocs/op
+BenchmarkWitnessConstruction-16    	      10	    340904 ns/op	   18392 B/op	     524 allocs/op
+BenchmarkWitnessConstruction-16    	      10	    372648 ns/op	   18392 B/op	     524 allocs/op
+BenchmarkWitnessConstruction-16    	      10	    307460 ns/op	   18393 B/op	     524 allocs/op
+PASS
+ok  	zerotrust/z9bench	0.069s
+
+=== E9 Full local witness -> Groth16 prove -> Groth16 verify pipeline ===
+goos: linux
+goarch: amd64
+pkg: zerotrust/z9bench
+cpu: AMD Ryzen 7 PRO 8840HS w/ Radeon 780M Graphics
+BenchmarkFullPipeline-16    	      10	  76028912 ns/op	     22021 constraints	       164.0 proof_bytes	21748698 B/op	    3337 allocs/op
+BenchmarkFullPipeline-16    	      10	  75673561 ns/op	     22021 constraints	       164.0 proof_bytes	21741350 B/op	    3315 allocs/op
+BenchmarkFullPipeline-16    	      10	  74672629 ns/op	     22021 constraints	       164.0 proof_bytes	21736642 B/op	    3311 allocs/op
+BenchmarkFullPipeline-16    	      10	  77578440 ns/op	     22021 constraints	       164.0 proof_bytes	21740296 B/op	    3309 allocs/op
+BenchmarkFullPipeline-16    	      10	  79179435 ns/op	     22021 constraints	       164.0 proof_bytes	21740266 B/op	    3309 allocs/op
+BenchmarkFullPipeline-16    	      10	  75367893 ns/op	     22021 constraints	       164.0 proof_bytes	21739243 B/op	    3311 allocs/op
+BenchmarkFullPipeline-16    	      10	  77539143 ns/op	     22021 constraints	       164.0 proof_bytes	21738627 B/op	    3306 allocs/op
+BenchmarkFullPipeline-16    	      10	  75048847 ns/op	     22021 constraints	       164.0 proof_bytes	21739107 B/op	    3308 allocs/op
+BenchmarkFullPipeline-16    	      10	  75972609 ns/op	     22021 constraints	       164.0 proof_bytes	21739898 B/op	    3309 allocs/op
+BenchmarkFullPipeline-16    	      10	  76135403 ns/op	     22021 constraints	       164.0 proof_bytes	21738363 B/op	    3306 allocs/op
+PASS
+ok  	zerotrust/z9bench	26.444s
